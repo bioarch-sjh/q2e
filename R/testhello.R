@@ -1,0 +1,48 @@
+#' Test the 'hello' c function
+#' 
+#' @param n The number of times to say hello
+#' @keywords test
+#' @useDynLib q2e
+#' @export
+#' @examples
+#' hello2()
+
+
+hello2 <- function(n) {
+.C("hello", as.integer(n))
+}
+
+
+#' Test the 'hello person' c function
+#' 
+#' @param name The name of the person to say hello to
+#' @keywords test
+#' @useDynLib q2e
+#' @export
+#' @examples
+#' hello3("Simon")
+
+
+hello3 <- function(name) {
+.C("helloname", as.character(name))
+}
+
+
+
+#' Test the 'Rmain' q2e c function
+#' @param dfn data file name
+#' @param pepfn peptide file name
+#' @param paramfn parameter file name
+#' @keywords test
+#' @useDynLib q2e
+#' @export
+#' @examples
+#' testq2e()
+
+
+
+testq2e <- function(dfn,pepfn,paramfn){
+
+.C("Rmain", as.character(dfn), as.character(pepfn), as.character(paramfn))
+
+}

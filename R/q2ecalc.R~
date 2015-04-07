@@ -1,0 +1,51 @@
+#' Mimic the original q2e program (for testing the individual functions)
+#' 
+#' @param data_filelist text file containing list of data input files
+#' @param peptide_filelist text file containing list of peptides
+#' @param parameter_file text file containing parameters
+#' @keywords q2e testing
+#' @export
+#' @examples
+#' q2ecalc(data_filelist,peptide_filelist,parameter_file)
+
+
+
+
+q2ecalc <- function(datalist=NA,peplist=NA,paramfile=NA){
+
+
+
+	#TODO: Type checking on set values:
+	n<-nargs()
+	if(is.na(datalist)){	
+		message("ERROR: data list file not specified")
+		return(NA)
+	}
+	if(is.na(peplist)){	
+		message("ERROR: peptide list file not specified")
+		return(NA)
+	}
+
+
+	message("---------------------\n\tloading file list from ",datalist)
+	flist <- q2eloadfiles(datalist,verbose=T)
+
+
+	peptides <- q2eloadpeptides(peplist,verbose=T)
+
+
+
+	if(is.na(paramfile)){
+		message("---------------------\n\tloading default parameters")
+		params <- q2eparams
+	}
+
+
+	data<- list(flist,peptides)
+
+
+	return(data)
+
+
+}
+
