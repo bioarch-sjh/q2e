@@ -2,7 +2,7 @@
 % Please edit documentation in R/testhello.R
 \name{hello2}
 \alias{hello2}
-\title{Test the 'hello' c function}
+\title{Test the 'hello' c calling function}
 \usage{
 hello2(n)
 }
@@ -10,7 +10,7 @@ hello2(n)
 \item{n}{The number of times to say hello}
 }
 \description{
-Test the 'hello' c function
+Test the 'hello' c calling function
 }
 \examples{
 hello2()

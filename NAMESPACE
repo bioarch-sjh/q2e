@@ -2,6 +2,7 @@
 
 export(hello2)
 export(hello3)
+export(isodists)
 export(q2ecalc)
 export(q2eloadfiles)
 export(q2eloadpeptides)

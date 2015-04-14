@@ -21,20 +21,21 @@
 /************************************************************************/
 
 
-
 #include <stdio.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 #include "constants.h"
-//Don't forget to uncomment the following when compiling the R library
-//#include <R.h>
+
+#include "getline.h"
+
+
 
 /*C Procedures*/
 int pepfiles (char *name, SAMPLE *data, int nsamples, int nreps, int nmasses, PEPTIDE *pep, int numpep, int FITPEAKS, double FIRSTMASS, double SNRLIM);              
 void iso(PEPTIDE *pep, int numpep, ISODIST  *dist); 
-int getLine(FILE *fp, int v[], int *zs, int *pg, int *cbm);
+//int getLine(FILE *fp, int v[], int *zs, int *pg, int *cbm);
 void runga (char *name, PEPTIDE *pep, int numpep, ISODIST  *dist, int msamples, int FITPEAKS, double GALIM);
 
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/testhello.R
 \name{hello3}
 \alias{hello3}
-\title{Test the 'hello person' c function}
+\title{Test string passing in the 'hello person' c function}
 \usage{
 hello3(name)
 }
@@ -10,7 +10,7 @@ hello3(name)
 \item{name}{The name of the person to say hello to}
 }
 \description{
-Test the 'hello person' c function
+Test string passing in the 'hello person' c function
 }
 \examples{
 hello3("Simon")

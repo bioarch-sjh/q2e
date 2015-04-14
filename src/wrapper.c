@@ -27,13 +27,15 @@
 #include <stdarg.h>
 #include <string.h>
 #include "constants.h"
-//Don't forget to uncomment the following when compiling the R library
-//#include <R.h>
+
+#include "getline.h"
+
+
 
 /*C Procedures*/
 int pepfiles (char *name, SAMPLE *data, int nsamples, int nreps, int nmasses, PEPTIDE *pep, int numpep, int FITPEAKS, double FIRSTMASS, double SNRLIM);              
 void iso(PEPTIDE *pep, int numpep, ISODIST  *dist); 
-int getLine(FILE *fp, int v[], int *zs, int *pg, int *cbm);
+//int getLine(FILE *fp, int v[], int *zs, int *pg, int *cbm);
 void runga (char *name, PEPTIDE *pep, int numpep, ISODIST  *dist, int msamples, int FITPEAKS, double GALIM);
 
 
@@ -517,39 +519,4 @@ int oldmain (int argc, char *argv[])
   }
   return 0;
 } 
-
-/*****************************************************
-Procedure: getLine
-Description: reads in whole line as a string
-******************************************************/
-int getLine(FILE *fp, int v[], int *zs, int *pg, int *cbm)
-{
-	int i, ch;
-    int z = 0;
-    int x = 0;
-    int b = 0;
-
-    i = 0;
-    ch = fgetc(fp);
-
-    v[i] = ch-65;    
-	    	
-	while (ch != 10)
-	{
-	    i++;
-	    ch = fgetc(fp);
-	    v[i] = ch-65;
-	    if (v[i] == 25) z++;
-	    /* X means a modified cysteine with carboxymethylation (which adds 58 Da) */
-	    if (v[i] == 23) x++;
-	    /* B means modified with Gln->pyro-Glu (N-term Q) which subtracts 17 Da */
-	    if (v[i] == 1) b++;
-	}
-
-    (*zs) = z;
-    (*pg) = b;
-    (*cbm) = x;
-	return i;	
-}
-
 
