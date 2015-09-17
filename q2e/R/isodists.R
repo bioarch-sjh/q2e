@@ -1,14 +1,10 @@
-#' Test the 'Rmain' q2e c function
-#' @param dfn data file name
+#' Test the 'R_iso_main' q2e c function
 #' @param pepfn peptide file name
-#' @param paramfn parameter file name
 #' @keywords test
 #' @useDynLib q2e
 #' @export
 #' @examples
-#' testq2e()
-
-
+#' isodists()
 
 isodists <- function(pepfn){
 
@@ -26,6 +22,7 @@ isodists <- function(pepfn){
 		return
 	}
 
+    message(sprintf("Calculating isodists for %d peptides",npep))
 
 	#create the array for the result (npeptides * 5, 5)
 	#result<- matrix(nrow = 5*npep,ncol=2)
