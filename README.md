@@ -23,6 +23,21 @@ Of course, you'll only need to do that once for your R installation. After that,
  `> library("q2e")`
 
 
+## C Code
+
+Julie Wilson's original C code is in the directory 'jwc'. A modified version of this code is in the q2e 'src' subdirectory
+
+###Compiling and running
+
+To compile the code, go to the 'src' subdirectory and use the command:
+
+ `R CMD SHLIB isowrap.c isodists.c getline.c`
+
+Then you'll need to load the compiled library in R:
+
+ `> dyn.load("isowrap.so")`
+ 
+Now you can call the C directly: 
 
 
 

@@ -1,3 +1,5 @@
+/* edited this file to include zeros for S35. */
+
 #include <stdio.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -8,12 +10,7 @@
 #include <ctype.h>
 #include "constants.h"
 #include "files.h"
-
-#define DEBUG_R
-
-#define NUMELEMENTS 5
-#define NUMLETTERS 26
-#define NUMISOTOPES 5
+#include "isodists.h"
 
 void readIsotopeTable(char *filename, ISOTAB *element, int num, int numiso);
 double getIsoDist(int ii, ISOTAB *element, int num, double *peptide, ISODIST *dist);
@@ -23,140 +20,100 @@ Procedure:      iso
 *****************************************/
 void iso (PEPTIDE *pep, int numpep, ISODIST *dist)
 {  
-  //FILE *fp = NULL;
+  FILE *fp = NULL;
   /* number of elements in isotope table */
-
-#ifdef DEBUG_R
-  printf("Loading amino table\n");fflush(stdout);
-#endif
-
-
-  /* THIS STRUCTURE SHOULD BE ITENTICAL TO THE FILE "aminomasses" */
-  //const int AMINODATA[numletters][numelements] = {
-
-  const int TAMINODATA[3][2] = {{0,1},{2,3},{4,5}};
-
-  int x = TAMINODATA[0][0];
-  printf("x = %d\n",x);
-
-  const int AMINODATA[NUMLETTERS][NUMELEMENTS] = {
-     {3,  7, 1,  2, 0},
-	 {0, -1, 0, -1, 0},
-	 {3,  7, 1,  2, 1},
-	 {4,  7, 1,  4, 0},
-	 {5,  9, 1,  4, 0},
-	 {9, 11, 1,  2, 0},
-	 {2,  5, 1,  2, 0},
-	 {6,  9, 3,  2, 0},
-	 {6, 13, 1,  2, 0},
-	 {0,  0, 0,  0, 0},
-	 {6, 14, 2,  2, 0},
-	 {6, 13, 1,  2, 0},
-	 {5, 11, 1,  2, 1},
-	 {4,  8, 2,  3, 0},
-	 {0,  0, 0,  0, 0},
-	 {5,  9, 1,  2, 0},
-	 {5, 10, 2,  3, 0},
-	 {6, 14, 4,  2, 0},
-	 {3,  7, 1,  3, 0},
-	 {4,  9, 1,  3, 0},
-	 {0,  0, 0,  0, 0},
-	 {5, 11, 1,  2, 0},
-	{11, 12, 2,  2, 0},
-	 {2,  2, 0,  2, 0},
-	 {9, 11, 1,  3, 0},
-	 {0,  0, 0,  1, 0}
-	};
-
-
+  int numelements = 5; 
   /* number of different isotopes in isotope table */
-  int numiso = 5;
-
+  int numiso = 5; 
+  int tmp, dtmp;
   double imass;
   
   int i, j, k;
   
   double *peptide = NULL;
-  peptide = (double*) malloc (NUMELEMENTS *  sizeof(double));
+  peptide = (double*) malloc (numelements *  sizeof(double));
 
   ISOTAB  *element = NULL;
-  element = (ISOTAB*) malloc (NUMELEMENTS *  sizeof(ISOTAB));
-  for (i = 0; i < NUMELEMENTS; i++)
+  element = (ISOTAB*) malloc (numelements *  sizeof(ISOTAB));
+  for (i = 0; i < numelements; i++)
   {
     element[i].isotope = (double*) malloc (numiso * sizeof(double));
     element[i].abundance = (double*) malloc (numiso * sizeof(double));
   }
 
-  AMINO  *letter = NULL;
-  letter = (AMINO*) malloc (26 *  sizeof(AMINO));
-  for (i = 0; i < 26; i++)
-  {
-    letter[i].element = (int*) malloc (NUMELEMENTS * sizeof(int));
-  }
+	AMINO  *letter = NULL;
+	letter = (AMINO*) malloc (26 *  sizeof(AMINO));
+	for (i = 0; i < 26; i++){
+		letter[i].element = (int*) malloc (numelements * sizeof(int));
+	}
 
-  //TODO: Although we've replaced the file aminomasses with the AMINODATA array, we need a better way to load other amino masses if we need to.
-  /* read in elements for each amino acid */
-  //fp = fopen(AMINO_FILE, "r");
-  for (i = 0; i < 26; i++)
-  {
-    for (k = 0; k < NUMELEMENTS; k++)
-    {
-      //tmp = fscanf(fp,"%d ", &dtmp);
-      //letter[i].element[k] = dtmp;
-      letter[i].element[k] = AMINODATA[i][k];
-    }
-  }
-  //fclose(fp);
+	/* read in elements for each amino acid */
+	if((fp = fopen(AMINO_FILE, "r"))==NULL)
+	{
+		printf("Unable to load AMINO_FILE \"%s\"\nexiting...",AMINO_FILE);
+		exit(0);
+	}
+	else
+	{
 
-  readIsotopeTable(ISO_TABLE, element, NUMELEMENTS, numiso);
+		  for (i = 0; i < 26; i++)
+		  {
+			for (k = 0; k < numelements; k++)
+			{
+			  tmp = fscanf(fp,"%d ", &dtmp);
+			  letter[i].element[k] = dtmp;
+			}
+		  }
+		  fclose(fp);
 
-  printf("success reading iso table\n");
+		  readIsotopeTable(ISO_TABLE, element, numelements, numiso);
 
+		  for (i = 0; i < numpep; i++)
+		  {
+			/*find the peptides that isotope distributions are required for */
+			printf("observed mass: %0.1f\n", pep[i].pepmass);
 
-  for (i = 0; i < numpep; i++)
-  {
-    /*find the peptides that isotope distributions are required for */
-    if (pep[i].found == 1)
-    {
-            
-      for (k = 0; k < NUMELEMENTS; k++)
-      {
+			for (k = 0; k < numelements; k++)
+			{
+			  peptide[k] = 0.0;
+			  for (j = 0; j < pep[i].length; j++)
+			  {
+				peptide[k] = peptide[k] + (float)letter[pep[i].numseq[j]].element[k];
+			  }
+			}
 
-#ifdef DEBUG_R
-        printf("loading peptide element %d\n",k);fflush(stdout);
-#endif
-        peptide[k] = 0.0;
-        for (j = 0; j < pep[i].length; j++)
-        {
-           peptide[k] = peptide[k] + (float)letter[ pep[i].numseq[j] ].element[k];
-        }
-      }
+			/* remove 2H10 for each link between amino acids */
+			peptide[1] = peptide[1] - 2.0*(float)(pep[i].length - pep[i].zs - 1);
+			peptide[3] = peptide[3] - (float)(pep[i].length - pep[i].zs - 1);
+			imass = getIsoDist(i, element, numelements, peptide, dist);
 
-      /* remove 2H10 for each link between amino acids */
-      peptide[1] = peptide[1] - 2.0*(float)(pep[i].length - pep[i].zs - 1);
-      peptide[3] = peptide[3] - (float)(pep[i].length - pep[i].zs - 1);
+			printf("calculated %f\n", imass);
+		
+			printf("monoisotopic mass            : %0.9f\n", dist[i].prob[0]);
+			printf("monoisotopic mass plus one   : %0.9f \n", dist[i].prob[1]);
+			printf("monoisotopic mass plus two   : %0.9f \n", dist[i].prob[2]);
+			printf("monoisotopic mass plus three : %0.9f \n", dist[i].prob[3]);
+			printf("monoisotopic mass plus four  : %0.9f \n", dist[i].prob[4]);
+			if (fabs(imass-pep[i].pepmass) > 1.5) printf("SOMETHING IS WRIONG WITH THIS MASS: DIFF = %d\n", (int)(fabs(imass-pep[i].pepmass)+0.5));
+		  }
+	}
 
-
-#ifdef DEBUG_R
-        printf("getting iso dist..\n");fflush(stdout);
-#endif
-
-      imass = getIsoDist(i, element, NUMELEMENTS, peptide, dist);
-   
-      printf("calculated mass %f\n", imass);
-      if (fabs(imass-pep[i].pepmass) > 1.5) printf("ERROR: SOMETHING IS WRONG HERE, THE DIFERENCE BETWEEN THE GIVEN AND CALCULATED MASSES IS %d\n", (int)(fabs(imass-pep[i].pepmass)+0.5));
-    }
-  }
-
-  for (i = 0; i < NUMELEMENTS; i++)
+	//TODO: need to figure out whether to free stuff if we exit when we can't open AMINO_FILE
+  for (i = 0; i < numelements; i++)
   {
     free(element[i].isotope);
     free(element[i].abundance);
-    free(letter[i].element);
   }
   free(element);
-  free(letter);
-  free(peptide);
+
+
+	for (i = 0; i < 26; i++){
+		free(letter[i].element);
+	}
+
+	free(letter);
+
+	free(peptide);
 
 }
 
@@ -164,101 +121,39 @@ void iso (PEPTIDE *pep, int numpep, ISODIST *dist)
 Procedure: readIsotopeTable
 inputs the isotope info
 ************************************************************************************************************/
-void readIsotopeTable(char *filename, ISOTAB *element, const int num, const int numiso)
+void readIsotopeTable(char *filename, ISOTAB *element, int num, int numiso)
 {
-//  FILE  *ft = NULL;
-//ft = fopen(filename, "r");
+	FILE  *ft = NULL;
+	if((ft = fopen(filename, "r")) == NULL){
+		printf("Unable to open file \"%s\"\nexiting...",filename);
+		exit(0);
+	}
+	else{
 
-#ifdef DEBUG_R
-  printf("Loading iso table\n");fflush(stdout);
-#endif
+		char name[1024];
+		double ftmp, ftmp1;
+		int i, j, tmp;
 
-
-  if(num != 5)
-    printf("WARNING! Number of elements is not 5 - defaults won't work!\n");
-  if(numiso != 5)
-    printf("WARNING! Number of isotopes is not 5 - defaults won't work!\n");
-  
-  //char name[1024];
-  //double ftmp, ftmp1;
-  int i, j;//, tmp;
-
-//TODO: Make these global variables if they are consts
-//TODO: Need to read these values into the table:
-/*
-C 12.01070 12.00000 98.89220 13.00335 1.10780  0.00000 0.00000  0.00000 0.00000  0.00000 0.00000
-H  1.00794  1.00783 99.98443  2.01410 0.01557  0.00000 0.00000  0.00000 0.00000  0.00000 0.00000
-N 14.00670 14.00307 99.63370 15.00011 0.36630  0.00000 0.00000  0.00000 0.00000  0.00000 0.00000
-O 15.99940 15.99491 99.76280 16.99913 0.03720 17.99916 0.20004  0.00000 0.00000  0.00000 0.00000
-S 32.06500 31.97207 95.01800 32.97146 0.75000 33.96787 4.21500  0.00000 0.00000 35.96708 0.01700
-*/
-
-#ifdef DEBUG_R
-  printf("loading name array\n");fflush(stdout);
-#endif
-
-  const char ISOname[NUMELEMENTS][3] = {{"C\0"},{"H\0"},{"N\0"},{"O\0"},{"S\0"}};
-
-
-#ifdef DEBUG_R
-  printf("loading float arrays\n");fflush(stdout);
-#endif
-
-
-  /* avmass comes from the first column in the above */
-  const float ISOavmass[NUMELEMENTS] = {12.01070,
-                                 1.00794,
-                                14.00670,
-                                15.99940,
-                                32.06500};
-
-
-  const float ISOmass[NUMELEMENTS][NUMISOTOPES] = {
-                              {12.00000, 13.00335,  0.00000, 0.00000,  0.00000},
-                              { 1.00783,  2.01410,  0.00000, 0.00000,  0.00000},
-                              {14.00307, 15.00011,  0.00000, 0.00000,  0.00000},
-                              {15.99491, 16.99913, 17.99916, 0.00000,  0.00000},
-                              {31.97207, 32.97146, 33.96787, 0.00000, 35.96708}};
-
-
-
-  const float ISOabundance[NUMELEMENTS][NUMISOTOPES] = {
-                              {98.89220,  1.10780,  0.00000, 0.00000,  0.00000},
-                              {99.98443,  0.01557,  0.00000, 0.00000,  0.00000},
-                              {99.63370,  0.36630,  0.00000, 0.00000,  0.00000},
-                              {99.76280,  0.03720,  0.20004, 0.00000,  0.00000},
-                              {95.01800,  0.75000,  4.21500, 0.00000,  0.01700}};
-
-
-#ifdef DEBUG_R
-  printf("Basic arrays set\n");fflush(stdout);
-#endif
-
-  for (i = 0; i < NUMELEMENTS; i++)
-  {
-    //tmp = fscanf(ft, "%s %lf",  name, &ftmp);
-    //strcpy(element[i].name, name);
-    //element[i].avmass = ftmp;
-
-#ifdef DEBUG_R
-    printf("loading element %d\n",i);fflush(stdout);
-#endif
-
-
-    strcpy(element[i].name, ISOname[i]);
-    element[i].avmass = ISOavmass[i];
-
-
-    for (j = 0; j < NUMISOTOPES; j++)
-    {
-      //tmp = fscanf(ft, "%lf %lf",  &ftmp, &ftmp1);
-      //element[i].isotope[j] = ftmp;
-      //element[i].abundance[j] = ftmp1/100.0;
-
-      element[i].isotope[j] = ISOmass[i][j];
-      element[i].abundance[j] = ISOabundance[i][j]/100.0;
-    }
-  }
+		for (i = 0; i < num; i++)
+		{
+			tmp = fscanf(ft, "%s %lf",  name, &ftmp);
+			if(tmp!=2){
+				printf("Was expecting to read two elements (name and number), but read %d\n",tmp);
+			}
+			strcpy(element[i].name, name);
+			element[i].avmass = ftmp;
+			for (j = 0; j < numiso; j++)
+			{
+				tmp = fscanf(ft, "%lf %lf",  &ftmp, &ftmp1);
+				if(tmp!=2){
+					printf("Was expecting to read two elements (isotope and abundance), but read %d\n",tmp);
+				}
+				element[i].isotope[j] = ftmp;
+				element[i].abundance[j] = ftmp1/100.0;
+			}
+		}
+		fclose(ft);
+	}
 }
 
 /*************************************************************************************************************
@@ -897,6 +792,7 @@ double getIsoDist(int ii, ISOTAB *element, int num, double *peptide, ISODIST *di
 
   return(dist[ii].mass[0]);  
 }
+
 
 
 

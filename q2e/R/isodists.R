@@ -1,11 +1,39 @@
+
+
+
+
+#' Wrapper for the 'R_iso_seq' q2e c function
+#' @param seqeunce the amino acid sequence
+#' @keywords test
+#' @useDynLib q2e
+#' @export
+#' @examples
+#' q2e_isodists("IGQPGAVGPAGIR")
+q2e_isodists <- function(sequence){
+
+	message(sprintf("Calculating isotope distributions for peptide %s",sequence))
+
+	failedflag <- 0
+	result <- .C("R_iso_seq", infile=as.character(sequence),mass=as.double(1:5),prob=as.double(1:5),errflag=as.integer(failedflag))
+	
+	
+	return (result)
+}
+
+
+
+
+
+
+
+
 #' Test the 'R_iso_main' q2e c function
 #' @param pepfn peptide file name
 #' @keywords test
 #' @useDynLib q2e
 #' @export
 #' @examples
-#' isodists()
-
+#' isodists("../testdata/cowPeptides")
 isodists <- function(pepfn){
 
 	failedflag <- 0

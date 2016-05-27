@@ -52,7 +52,7 @@ int isogetLine(FILE *fp, int v[], int *zs)
 
 
 /*****************************************************
-Procedure: getLine
+Procedure: getLine (NB: There are two versions of this!!!
 Description: reads in whole line as a string
 ******************************************************/
 int getLine(FILE *fp, int v[], int *zs, int *pg, int *cbm)
