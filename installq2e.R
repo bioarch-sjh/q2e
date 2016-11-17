@@ -3,7 +3,7 @@
 #The idea is that we run this whenever we update the q2e code - not sure if it'll work!
 #http://hilaryparker.com/2014/04/29/writing-an-r-package-from-scratch/
 
-#Tried doing this, but it doesn't ececute the rest of the file
+#Tried doing this, but it doesn't execute the rest of the file
 #Assuming you have this in your .Rprofile
 #makeActiveBinding("refresh", function() { system("R"); q("no") }, .GlobalEnv)
 #refresh

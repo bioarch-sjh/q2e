@@ -25,6 +25,8 @@
 #include <stdarg.h>
 #include <string.h>
 
+#include <math.h>
+
 //#include <R.h>
 
 #include "constants.h"
@@ -34,13 +36,15 @@
 #include "isodists.h"
 #include "r_iso.h"
 
-
-#define DEBUG_R
+//Use this to get printouts when needed (may have overdone it with the printfs!)
+//#define DEBUG_R
 
 /* We need these definitions in R_iso */
 #define NUMELEMENTS 5
 #define NUMLETTERS 26
 #define NUMISOTOPES 5
+
+
 
 
 
@@ -75,8 +79,9 @@ void R_iso_seq(char **seq,  double *resultmass, double *resultprob, int *failed)
 	float ftmp;
     FILE *fin = NULL;
 
+#ifdef DEBUG_R
     printf("Inside R_iso_seq, sequence is %s, length is %d\n",*seq,strlen(*seq));
-
+#endif
 
     /* allocate and initialise the PEPTIDE array */
     PEPTIDE *pep = NULL;
@@ -103,9 +108,15 @@ void R_iso_seq(char **seq,  double *resultmass, double *resultprob, int *failed)
       //pep[k].zs = zs;
       pepFromSequence( &(pep[k]), *seq);
 
+#ifdef DEBUG_R
       printf("calculating theoretical isotope distribution:\n");
+#endif 
       /* Get the theoretical mass (adding one for the charge) and the theoretical distribution */
       pep[k].pepmass = 1.0 + R_iso(pep, numpep, dist, 0);
+
+
+
+#ifdef DEBUG_R
       printf("theoretical isotope distribution (including charge):\n");
       printf("%0.2f: %0.9f\n", pep[k].pepmass, dist[k].prob[0]);
       printf("%0.2f: %0.9f \n" ,pep[k].pepmass + 1.0, dist[k].prob[1]);
@@ -114,8 +125,13 @@ void R_iso_seq(char **seq,  double *resultmass, double *resultprob, int *failed)
       printf("%0.2f: %0.9f \n", pep[k].pepmass + 4.0, dist[k].prob[4]);
 
       printf("Populating R structures\n");
+#endif      
+      
+      
       for(m=0;m<numiso;m++){
+#ifdef DEBUG_R      
       	  printf("Isotope %d: mass is %f, prob is %f\n",m,pep[k].pepmass,dist[k].prob[m]);
+#endif
 
     	  resultmass[m] = pep[k].pepmass + (1.0 * m);
     	  resultprob[m] = dist[k].prob[m];
@@ -217,6 +233,8 @@ void R_iso_main (char **argv1, double *resultmass, double *resultprob, int *fail
       pep[k].zs = zs;
 
       iso(pep, numpep, dist, 1);
+      
+#ifdef DEBUG_R
       printf("observed isotope distribution:\n");
       printf("%0.1f: %0.9f\n", pep[k].pepmass, dist[k].prob[0]);
       printf("%0.1f: %0.9f \n" ,pep[k].pepmass + 1.0, dist[k].prob[1]);
@@ -225,8 +243,12 @@ void R_iso_main (char **argv1, double *resultmass, double *resultprob, int *fail
       printf("%0.1f: %0.9f \n", pep[k].pepmass + 4.0, dist[k].prob[4]);
 
       printf("Populating R structures\n");
+#endif
+
       for(m=0;m<numiso;m++){
+#ifdef DEBUG_R
       	  printf("Isotope %d: mass is %f, prob is %f\n",m,pep[k].pepmass,dist[k].prob[m]);
+#endif 
     	  resultmass[m] = pep[k].pepmass + (1.0 * m);
     	  resultprob[m] = dist[k].prob[m];
       }
@@ -369,7 +391,10 @@ float R_iso (PEPTIDE *pep, int numpep, ISODIST *dist, int check)
   const int TAMINODATA[3][2] = {{0,1},{2,3},{4,5}};
 
   int x = TAMINODATA[0][0];
+
+#ifdef DEBUG_R  
   printf("x = %d\n",x);
+#endif
 
   const int AMINODATA[NUMLETTERS][NUMELEMENTS] = {
   //  ELEMENT:
@@ -442,7 +467,9 @@ float R_iso (PEPTIDE *pep, int numpep, ISODIST *dist, int check)
   //fclose(fp);
 
   R_loadIsotopeTable(/*ISO_TABLE,*/ element, NUMELEMENTS, numiso);
+#ifdef DEBUG_R
   printf("success reading iso table\n");
+#endif
 
 #ifdef DEBUG_R
 	//Print the table for debugging

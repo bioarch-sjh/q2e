@@ -2,20 +2,21 @@
 
 
 
-#' Wrapper for the 'R_iso_seq' q2e c function
+#' Wrapper for the 'R_iso_seq' q2e c function, to get theoretical peaks from a sequence
 #' @param seqeunce the amino acid sequence
 #' @keywords test
 #' @useDynLib q2e
 #' @export
 #' @examples
-#' q2e_isodists("IGQPGAVGPAGIR")
-q2e_isodists <- function(sequence){
+#' q2e_tpeaks("IGQPGAVGPAGIR")
+q2e_tpeaks <- function(sequence){
 
 	message(sprintf("Calculating isotope distributions for peptide %s",sequence))
 
 	failedflag <- 0
 	result <- .C("R_iso_seq", infile=as.character(sequence),mass=as.double(1:5),prob=as.double(1:5),errflag=as.integer(failedflag))
 	
+	#TODO: Check the failed flag
 	
 	return (result)
 }
@@ -55,7 +56,7 @@ isodists <- function(pepfn){
 	#create the array for the result (npeptides * 5, 5)
 	#result<- matrix(nrow = 5*npep,ncol=2)
 
-	#todo:change the c code to match!
+	#TODO:change the c code to match!
 
 	result <- .C("R_iso_main", infile=as.character(pepfn),mass=as.double(1:(5*npep)),prob=as.double(1:(5*npep)),errflag=as.integer(failedflag))
 
