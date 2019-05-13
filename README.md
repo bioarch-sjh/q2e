@@ -53,3 +53,8 @@ Now you can call the C directly:
 
 Julie Wilson, Nienke L. van Doorn
 and Matthew J. Collins (2012). Assessing the extent of bone degradation using glutamine deamidation in collagen.  *Anal. Chem.* 84(21), 9041-9048.
+
+## folders
+
+- *crinkle* contains the original C code developed by Julie Wilson
+
