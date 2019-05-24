@@ -56,5 +56,5 @@ and Matthew J. Collins (2012). Assessing the extent of bone degradation using gl
 
 ## folders
 
-- *crinkle* contains the original C code developed by Julie Wilson
-
+- *crinkle* contains the original isodists C code developed by Julie Wilson
+- *raw* contains the original q2e C code developed by Julie Wilson

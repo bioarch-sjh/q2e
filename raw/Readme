@@ -1,0 +1,119 @@
+Make sure you are in the direcory (folder) where the code is, then the
+code can be compiled using the Makefile, i.e. just type "make".
+
+To run the code type: 
+./Q2E <filelist> <peptidelist> <parameterfile>
+
+<filelist> should be replaced by the name of a file (e.g. exampleFileList)
+containing the names (including the path) of the files to be processed. Note that 
+the name of the file will be used in the names of the output files, 
+e.g. exampleFileListResults.
+The format of this file should be the same as that given in the file
+exampleFileList, i.e. the number of files to be processed and the number of replicates
+on the first line followed by each filename on a new line. The filename should include 
+the path to where the files are.
+Replicates must follow consecutively.
+
+<peptideList> should be replaced by the name of a file containing the list of peptides
+with the number of peptides on the first line. Each following line should have the 
+monoisotopic mass of the peptide, the number of Qs in the peptide (1 or 2) and the sequence 
+of the peptide (with a Z added for each hydroxylated proline).
+
+Ouput:
+
+The programme calculates the amount of glutamine deamidation for each peptide in the file 
+<peptidelist>.
+If only one glutamine is being considered, the value of beta1 (between 0.0 and 1.0)
+shows the level of undeamidated glutamine, with 0.0 being totally deamidated and 1.0 being not
+deamidated at all. The value beta2 in this case is just 1.0-beta1 and shows the level 
+deamidated glutamine, i.e. of glutamic acid.
+If there were two glutamines being considered, then beta1 would show how much (of either) was
+undeamidated, beta2 would show how had one deamidated glutamine (either one) and beta3 would 
+show how much had both glutamines deamidated (with beta3 = 1.0 - beta1 - beta2).
+More than two glutamines can also be considered, but as the number of glutamines increases,
+the number of peaks (from the monoisotopic mass) being fitted, FITPEAKS, should also be 
+increased.
+
+Beta values are calculated for each set of replicates (if SNR level and fit in GA
+are ok so that value can be considered reliable). These are combined according to SNR
+levels, i.e. better spectra have more weight.
+
+The ouput to the screen shows why a spectrum has not had a value calculated for it 
+(poor SNR or poor fit in GA). The results are also written to the file <filelist>Results.
+
+The beta values are also output in a comma separated file called <filelist>Betas.csv.
+This has the number of sets of replicates on the first line (how many 
+betas to expect for each peptide). Each following line has the mass the peptide is
+found at (monoisotopic mass + 1) then the beta value for each replicate set. 
+Where there are two Qs, the betas for a sample follow each other with the smallest 
+value first.
+
+
+Parameters that can be fiddled with:
+
+In the parameterFile you will find:
+
+FITPEAKS 4
+GALIM 0.02
+SNRLIM 3.0
+FIRSTMASS 800.0
+LASTMASS 4000.0
+CSV 0
+
+FITPEAKS is the number of peaks in the isotope distribution to be included in the fit.
+The default is 4, but if there really are two Q's and both are deamidated to some extent 
+then there may be 5 decent sized peaks and it would be worth changing this to 5, but 
+there is no point in adding peaks that are just at noise level.
+
+GALIM is related to the fitness criterion in the genetic algorithm. 0.02 is the default, but 
+to get only the best fitted pepetides, use 0.01.
+
+SNRLIM is the SNR threshold to be used. The default value is 3.0.
+ 
+FIRSTMASS is the first m/z value to be considered and LASTMASS is the last. 
+
+CSV determines the file type.
+If CSV = 1, the code is set up to read comma separated files with intensities given as 
+real numbers, as output by mMass after processing.
+If CSV = 0, the code is set up to read space delimited files with counts given as 
+integers, as output when exporting from Flex Analysis. 
+
+
+All of these can be changed.
+
+# Q2Einfo.docx 
+
+The Q2E service calculates the proportion glutamine (Q) that has degraded to glutamic acid (E) in peptides  analyzed by MALDI-MS.  For each chosen peptide, the theoretical distribution is calculated and the measured distribution for each sample compared with this to determine the extent of glutamine deamidation.
+see 
+Assessing the extent of bone degradation using glutamine deamidation in collagen. Julie Wilson, Nienke L van Doorn, Matthew J Collins. Anal. Chem. 84(21), 9041-9048. (2012).
+(http://pubs.acs.org/doi/abs/10.1021/ac301333t?mi=z48nb4&af=R&pageSize=20&searchText=aging)
+
+The user supplies a file containing the names of the files to be processed together  with the data files. The format of this file should be the same as that given in the file exampleFileList, i.e. the number of files to be processed and the number of replicates on the first line followed by each filename on a new line. Replicates must follow consecutively.
+Note that the name of the file will be used in the names of the output files, e.g. exampleFileListResults.
+
+A file containing a list of peptides is also supplied by the user. This file should have the number of peptides on the first line. Each following line should have the 
+monoisotopic mass of the peptide, the number of Qs in the peptide (1 or 2) and the sequence of the peptide (with a Z added for each hydroxylated proline).
+
+Output:
+If only one glutamine is being considered, the value of beta1 (between 0.0 and 1.0) shows the level of undeamidated glutamine, with 0.0 being totally deamidated and 1.0 being not deamidated at all. The value beta2 in this case is just 1.0-beta1 and shows the level deamidated glutamine, i.e. of glutamic acid.
+If there were two glutamines being considered, then beta1 would show how much (of either) was undeamidated, beta2 would show how had one deamidated glutamine (either one) and beta3 would show how much had both glutamines deamidated (with beta3 = 1.0 - beta1 - beta2). More than two glutamines can also be considered, but as the number of glutamines increases,
+the number of peaks (from the monoisotopic mass) being fitted, FITPEAKS, should also be increased.
+
+Beta values are calculated for each set of replicates (if SNR level and fit in GA are ok so that value can be considered reliable). These are combined according to SNR levels, i.e. better spectra have more weight.
+
+The results are written to the file <filelist>Results and, where necessary, shows why a spectrum has not had a value calculated for it (poor SNR or poor fit in GA).
+
+The beta values are also output in a comma separated file called <filelist>Betas.csv. This has the number of sets of replicates on the first line (how many betas to expect for each peptide). Each following line has the mass the peptide is found at (monoisotopic mass + 1) then the beta value for each replicate set. 
+Where there are two Qs, the betas for a sample follow each other with the smallest value first.
+
+The following parameters can be changed:
+
+FITPEAKS is the number of peaks in the isotope distribution to be included in the fit. The default is 4, but if there really are two Q's and both are deamidated to some extent then there may be 5 decent sized peaks and it would be worth changing this to 5, but there is no point in adding peaks that are just at noise level.
+
+GALIM is related to the fitness criterion in the genetic algorithm. 0.02 is the default, but to get only the peptides with the best fit, use 0.01.
+
+SNRLIM is the SNR threshold to be used. The default value is 3.0.
+ 
+FIRSTMASS is the first m/z value to be considered and LASTMASS is the last. 
+
+
