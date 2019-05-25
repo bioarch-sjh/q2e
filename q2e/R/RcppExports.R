@@ -13,7 +13,7 @@ timesThree <- function(x) {
 #'
 #' @param paramFile the parameter file
 #' @export
-rq2e <- function(argVector) {
-    .Call(`_q2e_rq2e`, argVector)
+rq2e <- function(argVector, fnVector, Rnreplicates) {
+    .Call(`_q2e_rq2e`, argVector, fnVector, Rnreplicates)
 }
 

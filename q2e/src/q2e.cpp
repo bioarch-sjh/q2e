@@ -14,6 +14,14 @@ using namespace Rcpp;
 #include "ga.h"
 
 
+//ERROR CODES RETURNED BY RQ2E
+#define Q2E_BAD_ARGS                     1
+#define Q2E_CANT_OPEN_PARAMFILE          2
+#define Q2E_CANT_OPEN_PEPTIDEFILE        3
+#define Q2E_CANT_OPEN_FILELIST           4 //OBSOLETE
+#define Q2E_BAD_NFILES_NREPLICATES_COMBO 5
+
+
 
 //' Multiply a number by three
 //'
@@ -34,16 +42,17 @@ int getLine(FILE *fp, int v[], int *zs, int *pg, int *cbm);
 
 
 /****************************************
-Procedure:      rq2e, access point for the
+ Procedure:      rq2e, access point for the
  *****************************************/
 //' Run q2e via datafiles as in the C++ code
 //'
 //' @param paramFile the parameter file
 //' @export
 // [[Rcpp::export]]
-int rq2e ( Rcpp::StringVector argVector)
+int rq2e ( Rcpp::StringVector argVector, Rcpp::StringVector fnVector, int Rnreplicates)
 {
-  FILE *fp = NULL;
+  FILE *fp_param = NULL;
+  //FILE *fp = NULL;
   FILE *fin = NULL;
   int i, j, k, ii, nsamples, nreps, zs, cbm, pg;
   int numpep, newnumpep;
@@ -62,51 +71,252 @@ int rq2e ( Rcpp::StringVector argVector)
 
   //* Check that we have the correct number of files */
   if(nargs != 4){
-      Rprintf("ERROR 1: Correct program useage: ./QtoEcalc [data filelist] [peptide filelist] [parameter file] \n");
-      return 1;
+    Rprintf("ERROR Q2E_BAD_ARGS: Correct program useage: ./QtoEcalc [data filelist] [peptide filelist] [parameter file] \n");
+    return Q2E_BAD_ARGS;
   }
 
-
-
-
+  std::string fileListFile = Rcpp::as<std::string>(argVector[1]);
+  std::string peptideFile = Rcpp::as<std::string>(argVector[2]);
   std::string paramFile = Rcpp::as<std::string>(argVector[3]);
 
   printf("reading parameters from %s\n", paramFile.c_str());
-  fp = fopen(paramFile.c_str(), "r");
-  if (fp == NULL)
+  fp_param = fopen(paramFile.c_str(), "r");
+  if (fp_param == NULL)
   {
-    Rprintf("ERROR 2: couldn't open parameter file %s\n", paramFile.c_str());
-    return 2;
+    Rprintf("ERROR Q2E_CANT_OPEN_PARAMFILE: couldn't open parameter file %s\n", paramFile.c_str());
+    return Q2E_CANT_OPEN_PARAMFILE;
   }
   else
   {
-    tmp = fscanf(fp, "%s %d\n", name, &dtmp);
+    tmp = fscanf(fp_param, "%s %d\n", name, &dtmp);
     FITPEAKS = dtmp;
     Rprintf("%s = %d\n",name, FITPEAKS);
-    tmp = fscanf(fp, "%s %f\n", name, &ftmp);
+    tmp = fscanf(fp_param, "%s %f\n", name, &ftmp);
     GALIM = ftmp;
     Rprintf("%s = %0.2f\n",name, GALIM);
-    tmp = fscanf(fp, "%s %f\n", name, &ftmp);
+    tmp = fscanf(fp_param, "%s %f\n", name, &ftmp);
     SNRLIM = ftmp;
     Rprintf("%s = %0.1f\n",name, SNRLIM);
-    tmp = fscanf(fp, "%s %f\n", name, &ftmp);
+    tmp = fscanf(fp_param, "%s %f\n", name, &ftmp);
     FIRSTMASS = ftmp;
     Rprintf("%s = %0.1f\n",name, FIRSTMASS);
-    tmp = fscanf(fp, "%s %f\n", name, &ftmp);
+    tmp = fscanf(fp_param, "%s %f\n", name, &ftmp);
     LASTMASS = ftmp;
     Rprintf("%s = %0.1f\n",name, LASTMASS);
-    tmp = fscanf(fp, "%s %d\n", name, &dtmp);
+    tmp = fscanf(fp_param, "%s %d\n", name, &dtmp);
     CSV = dtmp;
     Rprintf("%s = %d\n",name, CSV);
-    fclose(fp);
+    fclose(fp_param);
+  }
+
+
+
+  /* keepname for output files */
+  char outfilename[1024];
+  strcpy(outfilename, fileListFile.c_str());
+
+  /*
+   Rprintf("reading data files from %s\n", fileListFile.c_str());
+   fp = fopen(outfilename, "r");
+   if (fp == NULL)
+   {
+   Rprintf("ERROR Q2E_CANT_OPEN_FILELIST: something is wrong with the filelist, %s\n", fileListFile.c_str());
+   return Q2E_CANT_OPEN_FILELIST;
+   }*/
+
+  //Check that the number of files is a multiple of the number of replicates:
+  if(fnVector.size()%Rnreplicates != 0){
+
+    Rprintf("ERROR Q2E_BAD_NFILES_NREPLICATES_COMBO: nfiles = %d, nreplicates = %d\n", fnVector.size(), Rnreplicates);
+    return Q2E_BAD_NFILES_NREPLICATES_COMBO;
+  }
+  else
+  {
+    /*
+     tmp = fscanf(fp, "%d %d\n", &dtmp, &dtmp1);
+     nsamples = dtmp;
+     nreps = dtmp1;
+     int msamples = nsamples/nreps;
+     */
+
+    nsamples = fnVector.size();
+    nreps = Rnreplicates;
+    int msamples = nsamples/nreps;
+
+    Rprintf("%d individual samples with %d replicates each of %d samples\n", nsamples, nreps, msamples);
+
+    // number of masses to be kept: nmasses = lastmass - firstmass in step m/z units
+    int nmasses = (int)((LASTMASS - FIRSTMASS)/STEP);
+
+    SAMPLE *data = NULL;
+    data = (SAMPLE *) malloc (nsamples * sizeof(SAMPLE));
+    for (i = 0; i < nsamples; i++)
+    {
+      data[i].vars = (double *) malloc (nmasses * sizeof(double));
+      data[i].num = (int *) malloc (nmasses * sizeof(int));
+      for (j = 0; j < nmasses; j++)
+      {
+        data[i].vars[j] = 0.0;
+        data[i].num[j] = 0;
+      }
+    }
+
+    double mult = 1.0/STEP;
+
+    // read in filenames
+    for (i = 0; i < nsamples; i++)
+    {
+      //tmp = fscanf(fp, "%s\n", name);
+      std::string fileName = Rcpp::as<std::string>(fnVector[i]);
+      fin = fopen(fileName.c_str(), "r");
+      if (fin == NULL)
+      {
+        printf("ERROR: couldn't find file, %s. Names may not match those in the filelist \n", fileName.c_str());
+        return(-1);
+      }
+      else
+      {
+        printf("%s\n", fileName.c_str());
+        strcpy(data[i].name, fileName.c_str());
+        // read in data
+        tmp = 0;
+        while (tmp != EOF)
+        {
+          // read in mass
+          if (CSV == 1) tmp = fscanf(fin, "%f,%f\n", &ftmp, &ftmp1);
+          else
+          {
+            tmp = fscanf(fin, "%f %d\n", &ftmp, &dtmp);
+            ftmp1 = (float)dtmp;
+          }
+          if (tmp != EOF)
+          {
+            ii = (int)((ftmp - FIRSTMASS)*mult + 0.5);
+            if ((ii > 0) && (ii < nmasses))
+            {
+              data[i].vars[ii] += ftmp1;
+              data[i].num[ii]++;
+            }
+          }
+        }
+        fclose(fin);
+      }
+    }
+    //fclose(fp);
+
+    for (i = 0; i < nsamples; i++)
+    {
+      for (k = 0; k < nmasses; k++)
+      {
+        if (data[i].num[k] > 0) data[i].vars[k] /= (float) data[i].num[k];
+      }
+    }
+
+    // read number of peptides
+    fin = fopen(peptideFile.c_str(), "r");
+    if (fin == NULL)
+    {
+      Rprintf("ERROR %d: couldn't open file with list of peptides, %s\n",Q2E_CANT_OPEN_PEPTIDEFILE, peptideFile.c_str());
+      return(Q2E_CANT_OPEN_PEPTIDEFILE);
+    }
+    else
+    {
+      tmp = fscanf(fin, "%d\n", &dtmp);
+      numpep = dtmp;
+      PEPTIDE *pep = NULL;
+      pep = (PEPTIDE *) malloc (numpep * sizeof(PEPTIDE));
+
+      for (k = 0; k < numpep; k++)
+      {
+        pep[k].sample = (SAMPLEPEP*) malloc (msamples * sizeof(SAMPLEPEP));
+        pep[k].numseq = (int*) malloc (MAXLINE * sizeof(int));
+      }
+      printf("checking %d m/zs:\n", numpep);
+
+      for (k = 0; k < numpep; k++)
+      {
+        // read peptide's m/z (this is monoisotopic mass) and number of Qs
+        tmp = fscanf(fin, "%f %d ", &ftmp, &dtmp);
+        pep[k].nq = dtmp;
+        // peptide should be observed at monoisotopic mass + 1 (for charge)
+        pep[k].pepmass = ftmp + 1.0;
+        pep[k].length = getLine(fin, pep[k].numseq, &zs, &pg, &cbm);
+        pep[k].zs = zs;
+        pep[k].pg = pg;
+        pep[k].cbm = cbm;
+        //printf("%f %d\n", pep[k].pepmass, pep[k].nq);
+        for (j = 0; j < msamples; j++)
+        {
+          pep[k].sample[j].peaks = (double*) malloc ((FITPEAKS + 2) * sizeof(double));
+          pep[k].sample[j].betas = (double*) malloc (pep[k].nq * sizeof(double));
+          pep[k].sample[j].found = -1;
+          strcpy(pep[k].sample[j].name, data[j].name);
+        }
+
+      }
+      newnumpep = pepfiles(outfilename, data, nsamples, nreps, nmasses, pep, numpep, FITPEAKS, FIRSTMASS, SNRLIM);
+      if (newnumpep > 0)
+      {
+        // note: this will not be filled for those peptides with pep[i].found = 0
+        ISODIST  *dist = NULL;
+        dist = (ISODIST*) malloc (numpep * sizeof(ISODIST));
+        for (k = 0; k < numpep; k++)
+        {
+          dist[k].mass = (double*) malloc (5 * sizeof(double));
+          dist[k].prob = (double*) malloc (5 * sizeof(double));
+        }
+
+        iso(pep, numpep, dist);
+
+        // number of peaks in isotope distribution to be fitted
+        runga (outfilename, pep, numpep, dist, msamples, FITPEAKS, GALIM);
+
+        for (k = 0; k < newnumpep; k++)
+        {
+          free (dist[k].mass);
+          free (dist[k].prob);
+        }
+        free (dist);
+
+      }
+      else printf("none of these peptide found!\n");
+
+      for (i = 0; i < nsamples; i++)
+      {
+        free (data[i].vars);
+      }
+      free (data);
+
+      for (i = 0; i < numpep; i++)
+      {
+        for (j = 0; j < msamples; j++)
+        {
+          free (pep[i].sample[j].peaks);
+          free (pep[i].sample[j].betas);
+        }
+        free (pep[i].sample);
+      }
+      free (pep);
+
+    }
+
   }
 
   return 0;
+
 }
 
 
+
+
+
+
+
+
+
+
 /****************************************
-Procedure:      main
+ Procedure:      main
  *****************************************/
 int q2emain (int argc, char *argv[])
 {
@@ -162,7 +372,7 @@ int q2emain (int argc, char *argv[])
 
     /* keepname for output files */
     char outfilename[1024];
-    strcpy(outfilename, argv[1]);
+    strcpy(outfilename, "RQ2E_OUTFILE.txt");//argv[1]);
 
     printf("reading data files from %s\n", argv[1]);
     fp = fopen(outfilename, "r");
@@ -228,11 +438,11 @@ int q2emain (int argc, char *argv[])
               {
                 data[i].vars[ii] += ftmp1;
                 data[i].num[ii]++;
-	          }
-	        }
-	      }
-   	      fclose(fin);
-	    }
+              }
+            }
+          }
+          fclose(fin);
+        }
       }
       fclose(fp);
 
@@ -335,37 +545,37 @@ int q2emain (int argc, char *argv[])
 }
 
 /*****************************************************
-Procedure: getLine
-Description: reads in whole line as a string
-******************************************************/
+ Procedure: getLine
+ Description: reads in whole line as a string
+ ******************************************************/
 int getLine(FILE *fp, int v[], int *zs, int *pg, int *cbm)
 {
-	int i, ch;
-    int z = 0;
-    int x = 0;
-    int b = 0;
+  int i, ch;
+  int z = 0;
+  int x = 0;
+  int b = 0;
 
-    i = 0;
+  i = 0;
+  ch = fgetc(fp);
+
+  v[i] = ch-65;
+
+  while (ch != 10)
+  {
+    i++;
     ch = fgetc(fp);
-
     v[i] = ch-65;
+    if (v[i] == 25) z++;
+    /* X means a modified cysteine with carboxymethylation (which adds 58 Da) */
+    if (v[i] == 23) x++;
+    /* B means modified with Gln->pyro-Glu (N-term Q) which subtracts 17 Da */
+    if (v[i] == 1) b++;
+  }
 
-	while (ch != 10)
-	{
-	    i++;
-	    ch = fgetc(fp);
-	    v[i] = ch-65;
-	    if (v[i] == 25) z++;
-	    /* X means a modified cysteine with carboxymethylation (which adds 58 Da) */
-	    if (v[i] == 23) x++;
-	    /* B means modified with Gln->pyro-Glu (N-term Q) which subtracts 17 Da */
-	    if (v[i] == 1) b++;
-	}
-
-    (*zs) = z;
-    (*pg) = b;
-    (*cbm) = x;
-	return i;
+  (*zs) = z;
+  (*pg) = b;
+  (*cbm) = x;
+  return i;
 }
 
 
