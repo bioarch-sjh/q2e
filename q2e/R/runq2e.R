@@ -3,12 +3,21 @@
 
 
 #' run q2e in the cpp style
-#' arg1 is the dataFile
+#' fileList a vector of filenames for the MALDI data
 #' arg2 is the peptideFile
 #' arg3 is the parameterFile
 #' @export
-runq2e <- function(fileList,nReplicates = 1, parameterFile = NA, peptideList = NA,verbose = F){
-  args = c("arg0","arg1","arg2","arg3")
+runq2e <- function(fileList,outFile = "rq2e", nReplicates = 1, parameterFile = NA, peptideList = NA,verbose = F){
+
+
+  args = c("arg0","rq2e","arg2","arg3")
+
+  if(is.character(outFile) && length(outFile) == 1 ){
+    args[2] = outFile
+  }
+  else{
+    warning("bad type for outFile, using 'rq2e' instead")
+  }
 
   #REMEMBER! R arrays are 1-indexed, C arrays are 0-indexed!
 
@@ -22,6 +31,7 @@ runq2e <- function(fileList,nReplicates = 1, parameterFile = NA, peptideList = N
   else
     args[4] <- parameterFile
 
+
   if(verbose){
     message("args is:")
     print(args)
@@ -31,6 +41,5 @@ runq2e <- function(fileList,nReplicates = 1, parameterFile = NA, peptideList = N
   }
 
   return (rq2e(args,fileList,nReplicates))
-
 
 }

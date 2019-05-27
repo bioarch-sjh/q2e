@@ -8,3 +8,12 @@ src/*.d
 crinkle/*.o
 crinkle/*.d
 .Rproj.user
+
+#These files are created while running tests:
+q2e/tests/testthat/*.csv
+q2e/tests/testthat/*.txt
+
+#These files are created while running vignettes:
+q2e/tests/testthat/*.csv
+q2e/tests/testthat/*.txt
+

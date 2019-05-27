@@ -1,0 +1,131 @@
+---
+title: "Running q2e from R"
+author: "Simon Hickinbotham"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+```{r set-options, echo=FALSE, cache=FALSE}
+options(width = 1200)
+```
+
+
+# Basic usage: 
+
+A simple way of using q2e in your project is to run: 
+
+
+```{r eval=FALSE, include=TRUE}
+library(q2e)
+runq2e("Datafile.txt")
+```
+
+
+This will:
+
+- run the q2e analysis on "Datafile.txt" - and 
+- create two output files in the current working directory
+    - `rq2eResults.txt`
+    - `r2e2Betas.csv`
+  
+The input file must have two columns of numbers representing the mass and intensity of a MALDI spectrum. Data files must separate these values with whitespace, but files ending `.csv` must be comma-separated. 
+
+The output files are identical to the files produced in the original C++ code. 
+
+
+# Detailed usage
+
+
+
+This
+
+
+
+# 
+
+The R version of q2e runs in *almost* the same way as Julie Wilson's original C version. The basic idea was that the list of MALDI data files to be processed, the peptides to check against and the the parameters of the algorithm are contained in a number of files. In the R version, the datafiles are passed in as a vector of file paths, and default values for the peptides and parameters are provided.
+
+To illustrate this, let's load the datafiles provided with the q2e package and run some analyses. 
+
+## Load the example data files. 
+
+
+The datafiles are space delimited and consist of two columns: the mass and the intensity of the MALDI spectrum, like this: 
+
+
+
+
+```{r}
+  datafiles <- c(system.file("extdata", "1052a1_65_1_plastic_M19_04132012Kinetics1rr.txt", package = "q2e"),
+                 system.file("extdata", "1052a2_65_1_plastic_A1_04132012Kinetics1rr.txt", package = "q2e"),
+                 system.file("extdata", "1052a3_65_1_plastic_A16_04132012Kinetics1rr.txt", package = "q2e"),
+                 system.file("extdata", "1053b1_65_1_plastic_M20_04132012Kinetics1rr.txt", package = "q2e"),
+                 system.file("extdata", "1053b2_65_1_plastic_A2_04132012Kinetics1rr.txt", package = "q2e"),
+                 system.file("extdata", "1053b3_65_1_plastic_A17_04132012Kinetics1rr.txt", package = "q2e"))
+```
+
+
+
+
+## Running the basic program. 
+
+
+# Vignettes
+
+Vignettes are long form documentation commonly included in packages. Because they are part of the distribution of the package, they need to be as compact as possible. The `html_vignette` output type provides a custom style sheet (and tweaks some options) to ensure that the resulting html is as small as possible. The `html_vignette` format:
+
+- Never uses retina figures
+- Has a smaller default figure size
+- Uses a custom CSS stylesheet instead of the default Twitter Bootstrap style
+
+## Vignette Info
+
+Note the various macros within the `vignette` section of the metadata block above. These are required in order to instruct R how to build the vignette. Note that you should change the `title` field and the `\VignetteIndexEntry` to match the title of your vignette.
+
+## Styles
+
+The `html_vignette` template includes a basic CSS theme. To override this theme you can specify your own CSS in the document metadata as follows:
+
+    output: 
+      rmarkdown::html_vignette:
+        css: mystyles.css
+
+## Figures
+
+The figure sizes have been customised so that you can easily put two images side-by-side. 
+
+```{r, fig.show='hold'}
+plot(1:10)
+plot(10:1)
+```
+
+You can enable figure captions by `fig_caption: yes` in YAML:
+
+    output:
+      rmarkdown::html_vignette:
+        fig_caption: yes
+
+Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
+
+## More Examples
+
+You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
+
+```{r, echo=FALSE, results='asis'}
+knitr::kable(head(mtcars, 10))
+```
+
+Also a quote using `>`:
+
+> "He who gives up [code] safety for [code] speed deserves neither."
+([via](https://twitter.com/hadleywickham/status/504368538874703872))

@@ -18,9 +18,9 @@ using namespace Rcpp;
 #define Q2E_BAD_ARGS                     1
 #define Q2E_CANT_OPEN_PARAMFILE          2
 #define Q2E_CANT_OPEN_PEPTIDEFILE        3
-#define Q2E_CANT_OPEN_FILELIST           4 //OBSOLETE
+#define Q2E_CANT_OPEN_DATAFILE           4
 #define Q2E_BAD_NFILES_NREPLICATES_COMBO 5
-
+#define Q2E_BAD_LINE_IN_DATAFILE         6
 
 
 //' Multiply a number by three
@@ -47,7 +47,6 @@ int getLine(FILE *fp, int v[], int *zs, int *pg, int *cbm);
 //' Run q2e via datafiles as in the C++ code
 //'
 //' @param paramFile the parameter file
-//' @export
 // [[Rcpp::export]]
 int rq2e ( Rcpp::StringVector argVector, Rcpp::StringVector fnVector, int Rnreplicates)
 {
@@ -168,29 +167,39 @@ int rq2e ( Rcpp::StringVector argVector, Rcpp::StringVector fnVector, int Rnrepl
     {
       //tmp = fscanf(fp, "%s\n", name);
       std::string fileName = Rcpp::as<std::string>(fnVector[i]);
+      Rprintf("Loading data from file %s (entry %d in the file list)\n",fileName.c_str(),i);
       fin = fopen(fileName.c_str(), "r");
       if (fin == NULL)
       {
-        printf("ERROR: couldn't find file, %s. Names may not match those in the filelist \n", fileName.c_str());
-        return(-1);
+        Rprintf("ERROR Q2E_CANT_OPEN_DATAFILE: couldn't find data file, %s (entry %d in the file list).\n", fileName.c_str(),i);
+        return(Q2E_CANT_OPEN_DATAFILE );
       }
       else
       {
-        printf("%s\n", fileName.c_str());
+        Rprintf("%s, CSV = %d; ftmp = %f, ftmp1 = %f\n", fileName.c_str(), CSV, ftmp, ftmp1);
         strcpy(data[i].name, fileName.c_str());
         // read in data
         tmp = 0;
+        int line = 0;
         while (tmp != EOF)
         {
+          line++;
+
           // read in mass
-          if (CSV == 1) tmp = fscanf(fin, "%f,%f\n", &ftmp, &ftmp1);
-          else
-          {
+          if (CSV == 1){
+            tmp = fscanf(fin, "%f,%f\n", &ftmp, &ftmp1);
+          }
+          else          {
             tmp = fscanf(fin, "%f %d\n", &ftmp, &dtmp);
             ftmp1 = (float)dtmp;
           }
-          if (tmp != EOF)
-          {
+
+          if(tmp != 2 && tmp != EOF){
+            Rprintf("ERROR Q2E_BAD_LINE_IN_DATAFILE: Line = %d, Read %d arguments: ftmp = %f\tftpmp1 = %f\n",line,tmp,ftmp,ftmp1);
+            return(Q2E_BAD_LINE_IN_DATAFILE);
+          }
+
+          if (tmp != EOF){
             ii = (int)((ftmp - FIRSTMASS)*mult + 0.5);
             if ((ii > 0) && (ii < nmasses))
             {
@@ -200,9 +209,11 @@ int rq2e ( Rcpp::StringVector argVector, Rcpp::StringVector fnVector, int Rnrepl
           }
         }
         fclose(fin);
+        Rprintf("Successfully loaded data from file %s (entry %d in the file list)\n",fileName.c_str(),i);
       }
     }
     //fclose(fp);
+
 
     for (i = 0; i < nsamples; i++)
     {

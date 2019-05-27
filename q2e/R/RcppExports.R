@@ -12,7 +12,6 @@ timesThree <- function(x) {
 #' Run q2e via datafiles as in the C++ code
 #'
 #' @param paramFile the parameter file
-#' @export
 rq2e <- function(argVector, fnVector, Rnreplicates) {
     .Call(`_q2e_rq2e`, argVector, fnVector, Rnreplicates)
 }
