@@ -16,7 +16,7 @@ or this:
  
 Then you can use the `install_github` function to install q2e:
  
- `> install_github("franticspider/q2e")`
+ `> devtools::install_github("https://github.com/bioarch-sjh/q2e",subdir = "q2e",force=T)`
  
 Of course, you'll only need to do that once for your R installation. After that, whenever you want to use q2e, simply enter: 
  
