@@ -2,7 +2,7 @@
 
 q2e is an R package that uses a genetic algorithm to determine the extent of deamidation that gives the best fit to a measured distribution of masses for glutamine.
 
-## Installing from the R command-line
+# Installing
 
 You'll need the `devtools` package to install q2e so either do this:
 
@@ -23,7 +23,7 @@ Of course, you'll only need to do that once for your R installation. After that,
  `> library("q2e")`
 
 
-## User guide
+## Documentation
 
 The documentation (still in development) for q2e is available in vignettes for the package. To see these guides, enter:
 
@@ -33,26 +33,7 @@ This will open a page in your browser that will list the available documentation
 
 ## C Code
 
-Julie Wilson's original C code is in the directory 'jwc'. A modified version of this code is in the q2e 'src' subdirectory
-
-###Compiling, debugging and running
-
-To compile the code, go to the 'src' subdirectory and use the command:
-
- `R CMD SHLIB r_iso.c isodists.c getline.c`
-
-Then you'll need to load the compiled library in R:
-
- `> dyn.load("r_iso.so")`
- 
-Now you can call the C directly: 
-
- `.C("R_iso_main", infile=as.character(pepfn),mass=as.double(1:(5*npep)),prob=as.double(1:(5*npep)),errflag=as.integer(failedflag))`
-
-
-##Obsolete functions
-
-- *q2e_isodists*: function has been renamed to *q2e_tpeaks*, as the function returns theoretical peak data from a peptide sequence - nothing to do with isodists
+For reference, Julie Wilson's original C code is in the directory 'jwc'. A modified version of this code is in the q2e 'src' subdirectory, but the modifocations simply allow the Rcpp compiler to access the functions. 
 
 
 ## Academic Referencing
