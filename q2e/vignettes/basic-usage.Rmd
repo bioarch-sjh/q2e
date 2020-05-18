@@ -1,10 +1,12 @@
 ---
-title: "Running q2e from R"
-author: "Simon Hickinbotham"
+title: "Basic Usage of the Q2E package"
+author: "Simon Hickinbotham and Julie Wilson"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output:
+  rmarkdown::html_vignette:
+    toc: true
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{Basic Usage of the Q2E package}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -19,113 +21,366 @@ knitr::opts_chunk$set(
 options(width = 1200)
 ```
 
+# Introduction
 
-# Basic usage: 
+This guide is based on Julie Wilson's original `README` file, but with additions to explain how to call the functions using the R q2e library
 
-A simple way of using q2e in your project is to run: 
+
+# Installation
+
+the q2e package lives at `https://github.com/bioarch-sjh/q2e`, and there are more detailed installation instructions there. tldr: make sure you have the devtools package installed and then enter:
+
+```{r echo=TRUE,eval=FALSE,message=FALSE}
+devtools::install_github("https://github.com/bioarch-sjh/q2e",subdir = "q2e",force=T,build_vignettes = T)
+
+```
+
+# Worked example
+
+Let's go through an example now of how q2e is used. We'll use some sample data from the `bacollite` package to do this, so let's first load these: 
+
+```{r}
+require("bacollite")
+require("q2e")
+```
+
+The bacollite package provides some example data files that can be used during this tutorial. We need some
+R code to find where they are on our system. To get R to tell us the folder that the data is in we use the
+following command:
+
+```{r}
+fpath <- system.file("extdata",package="bacollite")
+```
+
+The MALDI data files that we are using are called:
+
+```
+20150326_SF_YG65_94_I11.txt
+20150326_SF_YG65_94_I14.txt
+20150326_SF_YG65_94_I17.txt
+```
+
+So we need to generate some files that `q2e` can use to parse this data. We'll use default values wherever possible to keep things simple in this first pass. 
+
+Let's start by analysing one of the files:
+
+```{r eval=FALSE, message=FALSE, warning=FALSE, include=T}
+qfilename <- sprintf("%s/20150326_SF_YG65_94_I11.txt",fpath)
+runq2e(qfilename)
+```
+
+The first line of this code generates the full path to the datafile. The second line then analyses the file using the default values 
+
+Running this code produces a lot of output, which we'll analyse here line by line: 
+
+    FITPEAKS = 4
+
+This tells you that we are looking for up to four peaks for each peptide regardless of deamidation.
+
+    reading parameters from /home/sjh518/R/x86_64-pc-linux-gnu-library/3.4/q2e/extdata/parameterFile
+    
+This tells you the path of the parameter file that `q2e` uses by default.     
+```    
+GALIM = 0.02
+SNRLIM = 3.0
+FIRSTMASS = 800.0
+LASTMASS = 4000.0
+CSV = 0
+```
+These are the values which (along with the `FITPEAKS` parameter) can be specified in the parameter file. 
+
+Next, the output gives some details of the sample(s) that were input: 
+
+    1 individual samples with 1 replicates each of 1 samples
+    Loading data from file /home/sjh518/R/x86_64-pc-linux-gnu-library/3.4/bacollite/extdata/20150326_SF_YG65_94_I11.txt 
+        (entry 0 in the file list)
+    /home/sjh518/R/x86_64-pc-linux-gnu-library/3.4/bacollite/extdata/20150326_SF_YG65_94_I11.txt, 
+        CSV = 0; ftmp = 4000.000000, ftmp1 = 0.000000
+    Successfully loaded data from file /home/sjh518/R/x86_64-pc-linux-gnu-library/3.4/bacollite/extdata/20150326_SF_YG65_94_I11.txt 
+        (entry 0 in the file list)
+        
+You can see that this is the file that we used as input to the system, and that it has loaded ok. 
+
+Next, we have a list of the masses that are being analysed: 
+```        
+checking 11 m/zs:
+836.4
+1105.6
+1690.8
+1706.8
+1863.9
+2056.9
+2073.0
+2088.9
+2105.0
+2689.2
+2705.2
+```
+These are the "standard" masses that were used in bioArch when the code was first used. 
+There is one extra line in the output before we get results:
+
+    fitting 4 peaks
+    
+..which is simply a repeat of the statement that we are fitting to four peaks. 
+
+Now to the output of the analysis : For each sample file, we go through each peptide and try to estimate the level of deamidation. The output for fitting the first peptide to our (single) sample look like this: 
+```    
+836.4 
+sample 1: best fit is : 0.004624 with signal to noise level:  26.90    noise diff:  0.63  beta1 = 1.000  beta2 0.000
+peptide 0: 836.4 number of samples that beta values are calculated for is 1.
+```
+
+To explain these lines:
+
+- (first line) We are looking at mass 836.4
+- (second line) We've done a fit for sample 1 - the best fit is a score from the genetic algorithm. Then there are two numbers related to the signal-to-noise level. Finally on this line we have the *beta* values. Julie explains: "If only one glutamine is being considered, the value of beta1 (between 0.0 and 1.0) shows the level of undeamidated glutamine, with 0.0 being totally deamidated and 1.0 being not deamidated at all. The value beta2 in this case is just 1.0-beta1 and shows the level deamidated glutamine, i.e. of glutamic acid.
+If there were two glutamines being considered, then beta1 would show how much (of either) was undeamidated, beta2 would show how had one deamidated glutamine (either one) and beta3 would show how much had both glutamines deamidated (with beta3 = 1.0 - beta1 - beta2). More than two glutamines can also be considered, but as the number of glutamines increases, the number of peaks (from the monoisotopic mass) being fitted, FITPEAKS, should also be increased."
+- (third line) Indicates that only one sample has had sufficient signal for this peptide to be considered. 
+
+The remainder of the output repeats this information for each peptide under consideration: 
+
+```
+1105.6 
+sample 1: best fit is : 0.000885 with signal to noise level:  44.82    noise diff:  0.42  beta1 = 0.917  beta2 0.083
+peptide 1: 1105.6 number of samples that beta values are calculated for is 1.
+1690.8 
+sample 1: rejected due to poor fit in GA
+peptide 2: 1690.8 number of samples that beta values are calculated for is 0.
+1706.8 
+sample 1: best fit is : 0.010324 with signal to noise level:  13.88    noise diff:  0.30  beta1 = 0.407  beta2 0.593
+peptide 3: 1706.8 number of samples that beta values are calculated for is 1.
+1863.9 
+sample 1: rejected due to poor SNR: signal 177.31; noise 61.73
+peptide 4: 1863.9 number of samples that beta values are calculated for is 0.
+2056.9 
+sample 1: best fit is : 0.004875 
+with signal to noise level:  7.24    noise diff:  1.59  beta1 = 0.980  beta2 0.020
+peptide 5: 2056.9 number of samples that beta values are calculated for is 1.
+2073.0 
+sample 1: best fit is : 0.002216 with signal to noise level:  15.11    noise diff:  0.92  beta1 = 0.440  beta2 0.560
+peptide 6: 2073.0 number of samples that beta values are calculated for is 1.
+2088.9 
+sample 1: best fit is : 0.004067 with signal to noise level:  11.03    noise diff:  0.00  beta1 = 0.387  beta2 0.613
+peptide 7: 2088.9 number of samples that beta values are calculated for is 1.
+2105.0 
+sample 1: best fit is : 0.018258 with signal to noise level:  3.26    noise diff:  0.07  beta1 = 0.869  beta2 0.131
+peptide 8: 2105.0 number of samples that beta values are calculated for is 1.
+2689.2 
+sample 1: rejected due to poor SNR: signal 290.28; noise 134.02
+peptide 9: 2689.2 number of samples that beta values are calculated for is 0.
+2705.2 
+sample 1: best fit is : 0.003279 with signal to noise level:  5.10    noise diff:  0.57  beta1 = 1.000  beta2 0.000
+peptide 10: 2705.2 number of samples that beta values are calculated for is 1.
+[1] 0
+```
+
+To help understand this output, make sure you agree with the following observations: 
+
+- peaks at mass 1690.8, 1863.9 and 2689.2 could not be processed because of their low signal-to-noise ratios. 
+- The peak with the highest deamidation was at 2088.9, where the ratio of glutamine:glutamic acid is 0.387:0.613
+- The peak with the lowest deamidation was at 2705.2, where the ratio is 1:0
+
+## Output files. 
+
+Running q2e generates two text files, which appear in the current working directory. You can find your current working directory using the command `getwd()`. 
+
+- `rq2eResults.txt` contains the output of the analysis as described above
+- `rq2eBetas.txt` contains the information regarding the beta1 values (again as described above), but in csv format. The first column is the datafile name and the remaining columns are the values of beta1. Where the SNR was too low for analysis, the cell for that mass value is left blank. 
+
+# Analysing multiple files
+
+The q2e package currently records the analysis in text files, which will be overwritten if `runq2e` is called within a loop. If multiple input files need to be produced, you'll need to create a vector of filenames. There are many ways to generate this vector, including reading the filenames from a text file, but you can use a for loop to do it like this: 
+
+```{r eval=FALSE, include=TRUE}
+fileList <- NA
+for(nn in 1:10){
+  fn <- sprintf("inputfile_%d_.txt",nn)
+  if(nn==1)
+    fileList <- fn
+  else
+    fileList <- c(fileList,fn)
+}
+```
+
+Then you can run your analysis using `runq2e(fileList)` and the results will all be placed in the output files as described above, with one entry per file. 
+
+If you have multiple replicates you'll need to adjust the `nReplicates` argument, which defaults to 1. See the appendix below for notes on how replicates are grouped. It can take a bit more work to generate filenames -- one approach is to use a nested for loop like this: 
 
 
 ```{r eval=FALSE, include=TRUE}
-library(q2e)
-runq2e("Datafile.txt")
+fileList <- NA
+firstfile <- T
+for(nn in 1:10){
+  for(rr in 1:3){
+    fn <- sprintf("inputfile_%d_%d.txt",nn,rr)
+    if(nn==1 && rr==1)
+      fileList <- fn
+    else
+      fileList <- c(fileList,fn)
+  }
+}
+
+require(q2e)
+runq2e(fileList,nReplicates = 3)
+```
+
+Remember to run the analysis with the `nReplicates` parameter set to 3 as in the above. 
+
+# Custom parameter files
+
+
+you can use your own parameter file - just call q2e with an extra parameterFile argument like this: 
+
+`> runq2e("datafile.txt#2,parameterFile="/pathTo/myCustomParameters.txt")`
+
+the parameterFile can be anywhere on the system and have any name, but it must be in the correct format as described below
+
+
+
+## Parameter file options
+
+The parameter file that Q2E uses must be in the following format: 
+
+```
+FITPEAKS 4
+GALIM 0.02
+SNRLIM 3.0
+FIRSTMASS 800.0
+LASTMASS 4000.0
+CSV 0
+```
+
+**FITPEAKS** is the number of peaks in the isotope distribution to be included in the fit.
+The default is 4, but if there really are two Q's and both are deamidated to some extent 
+then there may be 5 decent sized peaks and it would be worth changing this to 5, but 
+there is no point in adding peaks that are just at noise level.
+
+**GALIM** is related to the fitness criterion in the genetic algorithm. 0.02 is the default, but 
+to get only the best fitted pepetides, use 0.01.
+
+**SNRLIM** is the SNR threshold to be used. The default value is 3.0.
+ 
+**FIRSTMASS** is the lowest m/z value to be considered and **LASTMASS** is the highest. 
+
+**CSV** determines the file type.
+If CSV = 1, the code is set up to read comma separated files with intensities given as 
+real numbers, as output by mMass after processing.
+If CSV = 0, the code is set up to read space delimited files with counts given as 
+integers, as output when exporting from Flex Analysis. 
+
+# Input file format options
+
+Q2E can handle space-delimited and comma-delimited files as inputs. Note that Q2E does *not* detect this based on the file extension - instead you must set the **CSV** option in the `parameterFile` - see the section above for details. 
+
+
+
+# Appendix - Readme for C++ version
+
+Julie's original Readme file contains this information:
+
+```
+Ouput:
+
+The programme calculates the amount of glutamine deamidation for each peptide in the file 
+<peptidelist>.
+
+If only one glutamine is being considered, the value of beta1 (between 0.0 and 1.0)
+shows the level of undeamidated glutamine, with 0.0 being totally deamidated and 1.0 being not
+deamidated at all. The value beta2 in this case is just 1.0-beta1 and shows the level 
+deamidated glutamine, i.e. of glutamic acid.
+
+If there were two glutamines being considered, then beta1 would show how much (of either) was
+undeamidated, beta2 would show how had one deamidated glutamine (either one) and beta3 would 
+show how much had both glutamines deamidated (with beta3 = 1.0 - beta1 - beta2).
+More than two glutamines can also be considered, but as the number of glutamines increases,
+the number of peaks (from the monoisotopic mass) being fitted, FITPEAKS, should also be 
+increased.
+
+Beta values are calculated for each set of replicates (if SNR level and fit in GA
+are ok so that value can be considered reliable). These are combined according to SNR
+levels, i.e. better spectra have more weight.
+
+The ouput to the screen shows why a spectrum has not had a value calculated for it 
+(poor SNR or poor fit in GA). The results are also written to the file <filelist>Results.
+
+The beta values are also output in a comma separated file called <filelist>Betas.csv.
+This has the number of sets of replicates on the first line (how many 
+betas to expect for each peptide). Each following line has the mass the peptide is
+found at (monoisotopic mass + 1) then the beta value for each replicate set. 
+Where there are two Qs, the betas for a sample follow each other with the smallest 
+value first.
+
+Parameters that can be fiddled with:
+
+In the parameterFile you will find:
+
+FITPEAKS 4
+GALIM 0.02
+SNRLIM 3.0
+FIRSTMASS 800.0
+LASTMASS 4000.0
+CSV 0
+
+FITPEAKS is the number of peaks in the isotope distribution to be included in the fit.
+The default is 4, but if there really are two Q's and both are deamidated to some extent 
+then there may be 5 decent sized peaks and it would be worth changing this to 5, but 
+there is no point in adding peaks that are just at noise level.
+
+GALIM is related to the fitness criterion in the genetic algorithm. 0.02 is the default, but 
+to get only the best fitted pepetides, use 0.01.
+
+SNRLIM is the SNR threshold to be used. The default value is 3.0.
+ 
+FIRSTMASS is the first m/z value to be considered and LASTMASS is the last. 
+
+CSV determines the file type.
+If CSV = 1, the code is set up to read comma separated files with intensities given as 
+real numbers, as output by mMass after processing.
+If CSV = 0, the code is set up to read space delimited files with counts given as 
+integers, as output when exporting from Flex Analysis. 
+
+
+All of these can be changed.
+
+# Q2Einfo.docx 
+
+The Q2E service calculates the proportion glutamine (Q) that has degraded to glutamic acid (E) in peptides  analyzed by MALDI-MS.  For each chosen peptide, the theoretical distribution is calculated and the measured distribution for each sample compared with this to determine the extent of glutamine deamidation. See:
+
+Assessing the extent of bone degradation using glutamine deamidation in collagen. Julie Wilson, Nienke L van Doorn, Matthew J Collins. Anal. Chem. 84(21), 9041-9048. (2012).
+(http://pubs.acs.org/doi/abs/10.1021/ac301333t?mi=z48nb4&af=R&pageSize=20&searchText=aging)
+
+The user supplies a file containing the names of the files to be processed together  with the data files. The format of this file should be the same as that given in the file exampleFileList, i.e. the number of files to be processed and the number of replicates on the first line followed by each filename on a new line. Replicates must follow consecutively.
+Note that the name of the file will be used in the names of the output files, e.g. exampleFileListResults.
+
+A file containing a list of peptides is also supplied by the user. This file should have the number of peptides on the first line. Each following line should have the 
+monoisotopic mass of the peptide, the number of Qs in the peptide (1 or 2) and the sequence of the peptide (with a Z added for each hydroxylated proline).
+
+Output:
+If only one glutamine is being considered, the value of beta1 (between 0.0 and 1.0) shows the level of undeamidated glutamine, with 0.0 being totally deamidated and 1.0 being not deamidated at all. The value beta2 in this case is just 1.0-beta1 and shows the level deamidated glutamine, i.e. of glutamic acid.
+If there were two glutamines being considered, then beta1 would show how much (of either) was undeamidated, beta2 would show how had one deamidated glutamine (either one) and beta3 would show how much had both glutamines deamidated (with beta3 = 1.0 - beta1 - beta2). More than two glutamines can also be considered, but as the number of glutamines increases,
+the number of peaks (from the monoisotopic mass) being fitted, FITPEAKS, should also be increased.
+
+Beta values are calculated for each set of replicates (if SNR level and fit in GA are ok so that value can be considered reliable). These are combined according to SNR levels, i.e. better spectra have more weight.
+
+The results are written to the file <filelist>Results and, where necessary, shows why a spectrum has not had a value calculated for it (poor SNR or poor fit in GA).
+
+The beta values are also output in a comma separated file called <filelist>Betas.csv. This has the number of sets of replicates on the first line (how many betas to expect for each peptide). Each following line has the mass the peptide is found at (monoisotopic mass + 1) then the beta value for each replicate set. 
+Where there are two Qs, the betas for a sample follow each other with the smallest value first.
+
+The following parameters can be changed:
+
+FITPEAKS is the number of peaks in the isotope distribution to be included in the fit. The default is 4, but if there really are two Q's and both are deamidated to some extent then there may be 5 decent sized peaks and it would be worth changing this to 5, but there is no point in adding peaks that are just at noise level.
+
+GALIM is related to the fitness criterion in the genetic algorithm. 0.02 is the default, but to get only the peptides with the best fit, use 0.01.
+
+SNRLIM is the SNR threshold to be used. The default value is 3.0.
+ 
+FIRSTMASS is the first m/z value to be considered and LASTMASS is the last. 
 ```
 
 
-This will:
-
-- run the q2e analysis on "Datafile.txt" - and 
-- create two output files in the current working directory
-    - `rq2eResults.txt`
-    - `r2e2Betas.csv`
-  
-The input file must have two columns of numbers representing the mass and intensity of a MALDI spectrum. Data files must separate these values with whitespace, but files ending `.csv` must be comma-separated. 
-
-The output files are identical to the files produced in the original C++ code. 
-
-
-# Detailed usage
-
-
-
-This
-
-
-
-# 
-
-The R version of q2e runs in *almost* the same way as Julie Wilson's original C version. The basic idea was that the list of MALDI data files to be processed, the peptides to check against and the the parameters of the algorithm are contained in a number of files. In the R version, the datafiles are passed in as a vector of file paths, and default values for the peptides and parameters are provided.
-
-To illustrate this, let's load the datafiles provided with the q2e package and run some analyses. 
-
-## Load the example data files. 
-
-
-The datafiles are space delimited and consist of two columns: the mass and the intensity of the MALDI spectrum, like this: 
 
 
 
 
-```{r}
-  datafiles <- c(system.file("extdata", "1052a1_65_1_plastic_M19_04132012Kinetics1rr.txt", package = "q2e"),
-                 system.file("extdata", "1052a2_65_1_plastic_A1_04132012Kinetics1rr.txt", package = "q2e"),
-                 system.file("extdata", "1052a3_65_1_plastic_A16_04132012Kinetics1rr.txt", package = "q2e"),
-                 system.file("extdata", "1053b1_65_1_plastic_M20_04132012Kinetics1rr.txt", package = "q2e"),
-                 system.file("extdata", "1053b2_65_1_plastic_A2_04132012Kinetics1rr.txt", package = "q2e"),
-                 system.file("extdata", "1053b3_65_1_plastic_A17_04132012Kinetics1rr.txt", package = "q2e"))
-```
 
-
-
-
-## Running the basic program. 
-
-
-# Vignettes
-
-Vignettes are long form documentation commonly included in packages. Because they are part of the distribution of the package, they need to be as compact as possible. The `html_vignette` output type provides a custom style sheet (and tweaks some options) to ensure that the resulting html is as small as possible. The `html_vignette` format:
-
-- Never uses retina figures
-- Has a smaller default figure size
-- Uses a custom CSS stylesheet instead of the default Twitter Bootstrap style
-
-## Vignette Info
-
-Note the various macros within the `vignette` section of the metadata block above. These are required in order to instruct R how to build the vignette. Note that you should change the `title` field and the `\VignetteIndexEntry` to match the title of your vignette.
-
-## Styles
-
-The `html_vignette` template includes a basic CSS theme. To override this theme you can specify your own CSS in the document metadata as follows:
-
-    output: 
-      rmarkdown::html_vignette:
-        css: mystyles.css
-
-## Figures
-
-The figure sizes have been customised so that you can easily put two images side-by-side. 
-
-```{r, fig.show='hold'}
-plot(1:10)
-plot(10:1)
-```
-
-You can enable figure captions by `fig_caption: yes` in YAML:
-
-    output:
-      rmarkdown::html_vignette:
-        fig_caption: yes
-
-Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
-
-## More Examples
-
-You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
-
-```{r, echo=FALSE, results='asis'}
-knitr::kable(head(mtcars, 10))
-```
-
-Also a quote using `>`:
-
-> "He who gives up [code] safety for [code] speed deserves neither."
-([via](https://twitter.com/hadleywickham/status/504368538874703872))

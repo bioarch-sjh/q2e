@@ -14,14 +14,22 @@ or this:
  
  `> library(devtools)`
  
-Then you can use the `install_github` function to install q2e:
+Then you can use the `install_github` function to install q2e. As this package is in development, it's best to use the `force` option. Also, the documentation for the package is saved in vignettes, so you probably want to set `build_vignettes=T` so that these are installed:
  
- `> devtools::install_github("https://github.com/bioarch-sjh/q2e",subdir = "q2e",force=T)`
+ `> devtools::install_github("https://github.com/bioarch-sjh/q2e",subdir = "q2e",force=T,build_vignettes=T)`
  
 Of course, you'll only need to do that once for your R installation. After that, whenever you want to use q2e, simply enter: 
  
  `> library("q2e")`
 
+
+## User guide
+
+The documentation (still in development) for q2e is available in vignettes for the package. To see these guides, enter:
+
+`> browseVignettes("q2e")`
+
+This will open a page in your browser that will list the available documentation
 
 ## C Code
 
