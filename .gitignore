@@ -17,3 +17,5 @@ q2e/tests/testthat/*.txt
 q2e/tests/testthat/*.csv
 q2e/tests/testthat/*.txt
 
+#R project history
+q2e/.Rhistory
