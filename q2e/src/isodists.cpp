@@ -225,8 +225,9 @@ void iso (PEPTIDE *pep, int numpep, ISODIST *dist)
     /*find the peptides that isotope distributions are required for */
     if (pep[i].found == 1)
     {
+#ifdef DBG_PRINT
       Rprintf("%0.1f\n", pep[i].pepmass);
-
+#endif
       for (k = 0; k < numelements; k++)
       {
         peptide[k] = 0.0;
@@ -236,22 +237,29 @@ void iso (PEPTIDE *pep, int numpep, ISODIST *dist)
         }
       }
 
-      /* remove 2H10 for each link between amino acids */
+
+#ifdef DBG_PRINT
       Rprintf("peptide[1] = %0.2f; peptide[3] = %0.2f\n",peptide[1],peptide[3]);
+#endif
+
+      /* remove 2H10 for each link between amino acids */
       peptide[1] = peptide[1] - 2.0*(float)(pep[i].length - pep[i].zs - pep[i].pg - pep[i].cbm - 1);
       peptide[3] = peptide[3] - (float)(pep[i].length - pep[i].zs - pep[i].pg - pep[i].cbm - 1);
+
+#ifdef DBG_PRINT
       Rprintf("peptide[1] = %0.2f; peptide[3] = %0.2f\n",peptide[1],peptide[3]);
+#endif
 
       imass = getIsoDist(i, element, numelements, peptide, dist);
 
+#ifdef DBG_PRINT
       Rprintf("calculated %f\n", imass);
-
       Rprintf("monoisotopic mass            : %0.9f\n", dist[i].prob[0]);
       Rprintf("monoisotopic mass plus one   : %0.9f \n", dist[i].prob[1]);
       Rprintf("monoisotopic mass plus two   : %0.9f \n", dist[i].prob[2]);
       Rprintf("monoisotopic mass plus three : %0.9f \n", dist[i].prob[3]);
       Rprintf("monoisotopic mass plus four  : %0.9f \n", dist[i].prob[4]);
-
+#endif
       if (fabs(imass-pep[i].pepmass) > 1.5)
 	  {
 		Rprintf("ERROR: SOMETHING IS WRONG HERE, THE DIFERENCE BETWEEN THE GIVEN (%f) AND CALCULATED (%f) MASSES IS %f\n",(float)pep[i].pepmass, (float)imass, (float)(fabs(imass-pep[i].pepmass)+0.5));
@@ -330,12 +338,19 @@ double getIsoDist(int ii, ISOTAB *element, int num, double *peptide, ISODIST *di
   dist[ii].mass[0] = 0.0;
   dist[ii].prob[0] = 100.0;
 
+
+#ifdef DBG_PRINT
   Rprintf("getIsoDist Loop 1:\n");
+#endif
   for (i = 0; i < num; i++){
     power = peptide[i];
     dist[ii].mass[0] = dist[ii].mass[0] + peptide[i]*element[i].isotope[0];
     dist[ii].prob[0] = dist[ii].prob[0] * pow(element[i].abundance[0], power);
+
+#ifdef DBG_PRINT
     Rprintf("peptide[%d] = %0.2f, mass = %0.2f, prob = %0.2f\n",i,peptide[i], dist[ii].mass[0],dist[ii].prob[0]);
+#endif
+
   }
 
   /* get probabilty of monoisotopic mass plus 1 */

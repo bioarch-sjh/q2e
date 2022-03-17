@@ -25,6 +25,7 @@ using namespace Rcpp;
 #define Q2E_BAD_NFILES_NREPLICATES_COMBO 5
 #define Q2E_BAD_LINE_IN_DATAFILE         6
 
+//#define DBG_PRINT
 
 //' Multiply a number by three
 //'
@@ -271,7 +272,10 @@ int rq2e ( Rcpp::StringVector argVector, Rcpp::StringVector fnVector, int Rnrepl
         pep[k].sample = (SAMPLEPEP*) malloc (msamples * sizeof(SAMPLEPEP));
         pep[k].numseq = (int*) malloc (MAXLINE * sizeof(int));
       }
+
+#ifdef DBG_PRINT
       Rprintf("checking %d m/zs:\n", numpep);
+#endif
 
       for (k = 0; k < numpep; k++)
       {
@@ -284,7 +288,9 @@ int rq2e ( Rcpp::StringVector argVector, Rcpp::StringVector fnVector, int Rnrepl
         pep[k].zs = zs;
         pep[k].pg = pg;
         pep[k].cbm = cbm;
+#ifdef DBG_PRINT
         Rprintf("\t%f nq:%d  zs:%d\n", pep[k].pepmass, pep[k].nq, pep[k].zs);
+#endif
         for (j = 0; j < msamples; j++)
         {
           pep[k].sample[j].peaks = (double*) malloc ((FITPEAKS + 2) * sizeof(double));
@@ -294,15 +300,13 @@ int rq2e ( Rcpp::StringVector argVector, Rcpp::StringVector fnVector, int Rnrepl
         }
 
       }
+#ifdef DBG_PRINT
       Rprintf("Finished checking peptideList\n");
-      Rprintf("Finished checking\n");
-      Rprintf("Finished checking\n");
-      Rprintf("Finished checking\n\n");
       printpep(pep,numpep);
+#endif
 
       newnumpep = pepfiles(outfilename, data, nsamples, nreps, nmasses, pep, numpep, FITPEAKS, FIRSTMASS, SNRLIM);
 
-      Rprintf("Finished pepfiles function\n");
 
       if (newnumpep > 0)
       {
@@ -315,11 +319,15 @@ int rq2e ( Rcpp::StringVector argVector, Rcpp::StringVector fnVector, int Rnrepl
           dist[k].prob = (double*) malloc (5 * sizeof(double));
         }
 
+#ifdef DBG_PRINT
         Rprintf("Running iso()\n");
+#endif
         iso(pep, numpep, dist);
 
         // number of peaks in isotope distribution to be fitted
+#ifdef DBG_PRINT
         Rprintf("Running runga()\n");
+#endif
         runga (outfilename, pep, numpep, dist, msamples, FITPEAKS, GALIM);
 
         for (k = 0; k < newnumpep; k++)
