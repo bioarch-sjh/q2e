@@ -1,4 +1,6 @@
 /* edited this file to include zeros for S35. */
+#include <Rcpp.h>
+using namespace Rcpp;
 
 #include <stdio.h>
 #include <limits.h>
@@ -17,15 +19,15 @@ double getIsoDist(int ii, ISOTAB *element, int num, double *peptide, ISODIST *di
 Procedure:      iso
 *****************************************/
 void iso (PEPTIDE *pep, int numpep, ISODIST *dist)
-{  
+{
   /* number of elements in isotope table */
-  int numelements = 5; 
+  const int numelements = 5;
   /* number of different isotopes in isotope table */
-  int numiso = 5; 
+  const int numiso = 5;
   double imass;
-	
+
   int i, j, k;
-  
+
   double *peptide = NULL;
   peptide = (double*) malloc (numelements *  sizeof(double));
 
@@ -165,8 +167,8 @@ void iso (PEPTIDE *pep, int numpep, ISODIST *dist)
 	letter[24].element[3] = 3;
 	/* Z FOR ADDING HYDROXYLATIONS */
 	letter[25].element[3] = 1;
-	
-	
+
+
 	/* 	isotope info */
 	for (i = 0; i < numelements; i++)
 	{
@@ -176,55 +178,55 @@ void iso (PEPTIDE *pep, int numpep, ISODIST *dist)
 		element[i].abundance[j] = 0.0;
 	  }
 	}
-	
+
     /* C */
 	element[0].avmass = 12.0107;
 	element[0].isotope[0] = 12.0;
 	element[0].abundance[0] = 0.988922;
-	element[0].isotope[1] = 13.00335; 
+	element[0].isotope[1] = 13.00335;
 	element[0].abundance[1] = 0.0110780;
-	
+
     /* H */
 	element[1].avmass = 1.00794;
-	element[1].isotope[0] = 1.00783; 
-	element[1].abundance[0] = 0.9998443; 
-	element[1].isotope[1] = 2.0141; 
+	element[1].isotope[0] = 1.00783;
+	element[1].abundance[0] = 0.9998443;
+	element[1].isotope[1] = 2.0141;
 	element[1].abundance[1] = 0.0001557;
-	
+
     /* N */
-	element[2].avmass = 14.0067; 
-	element[2].isotope[0] = 14.00307; 
-	element[2].abundance[0] = 0.996337; 
-	element[2].isotope[1] = 15.00011;  
+	element[2].avmass = 14.0067;
+	element[2].isotope[0] = 14.00307;
+	element[2].abundance[0] = 0.996337;
+	element[2].isotope[1] = 15.00011;
 	element[2].abundance[1] = 0.0036630;
-	
+
     /* O */
-	element[3].avmass = 15.9994; 
-	element[3].isotope[0] = 15.99491; 
-	element[3].abundance[0] = 0.997628; 
-	element[3].isotope[1] = 16.99913;  
-	element[3].abundance[1] = 0.000372; 
-	element[3].isotope[2] = 17.99916;  
-	element[3].abundance[2] = 0.0020004; 
-	
+	element[3].avmass = 15.9994;
+	element[3].isotope[0] = 15.99491;
+	element[3].abundance[0] = 0.997628;
+	element[3].isotope[1] = 16.99913;
+	element[3].abundance[1] = 0.000372;
+	element[3].isotope[2] = 17.99916;
+	element[3].abundance[2] = 0.0020004;
+
     /* S */
-	element[4].avmass = 32.065;  
-	element[4].isotope[0] = 31.97207; 
-	element[4].abundance[0] = 0.95018; 
-	element[4].isotope[1] = 32.97146;    
-	element[4].abundance[1] = 0.0075; 
-	element[4].isotope[2] = 33.96787;  
+	element[4].avmass = 32.065;
+	element[4].isotope[0] = 31.97207;
+	element[4].abundance[0] = 0.95018;
+	element[4].isotope[1] = 32.97146;
+	element[4].abundance[1] = 0.0075;
+	element[4].isotope[2] = 33.96787;
 	element[4].abundance[2] = 0.04215;
-	element[4].isotope[4] = 35.96708;  
-	element[4].abundance[4] = 0.00017; 
-  
+	element[4].isotope[4] = 35.96708;
+	element[4].abundance[4] = 0.00017;
+
   for (i = 0; i < numpep; i++)
   {
     /*find the peptides that isotope distributions are required for */
     if (pep[i].found == 1)
     {
-      printf("%0.1f\n", pep[i].pepmass);
-            
+      Rprintf("%0.1f\n", pep[i].pepmass);
+
       for (k = 0; k < numelements; k++)
       {
         peptide[k] = 0.0;
@@ -235,22 +237,26 @@ void iso (PEPTIDE *pep, int numpep, ISODIST *dist)
       }
 
       /* remove 2H10 for each link between amino acids */
+      Rprintf("peptide[1] = %0.2f; peptide[3] = %0.2f\n",peptide[1],peptide[3]);
       peptide[1] = peptide[1] - 2.0*(float)(pep[i].length - pep[i].zs - pep[i].pg - pep[i].cbm - 1);
       peptide[3] = peptide[3] - (float)(pep[i].length - pep[i].zs - pep[i].pg - pep[i].cbm - 1);
+      Rprintf("peptide[1] = %0.2f; peptide[3] = %0.2f\n",peptide[1],peptide[3]);
 
       imass = getIsoDist(i, element, numelements, peptide, dist);
-      /*
-      printf("calculated %f\n", imass);
-      
-      printf("monoisotopic mass            : %0.9f\n", dist[i].prob[0]);
-      printf("monoisotopic mass plus one   : %0.9f \n", dist[i].prob[1]);
-      printf("monoisotopic mass plus two   : %0.9f \n", dist[i].prob[2]);
-      printf("monoisotopic mass plus three : %0.9f \n", dist[i].prob[3]);
-      printf("monoisotopic mass plus four  : %0.9f \n", dist[i].prob[4]);*/
-      if (fabs(imass-pep[i].pepmass) > 1.5) 
+
+      Rprintf("calculated %f\n", imass);
+
+      Rprintf("monoisotopic mass            : %0.9f\n", dist[i].prob[0]);
+      Rprintf("monoisotopic mass plus one   : %0.9f \n", dist[i].prob[1]);
+      Rprintf("monoisotopic mass plus two   : %0.9f \n", dist[i].prob[2]);
+      Rprintf("monoisotopic mass plus three : %0.9f \n", dist[i].prob[3]);
+      Rprintf("monoisotopic mass plus four  : %0.9f \n", dist[i].prob[4]);
+
+      if (fabs(imass-pep[i].pepmass) > 1.5)
 	  {
-		printf("ERROR: SOMETHING IS WRONG HERE, THE DIFERENCE BETWEEN THE GIVEN AND CALCULATED MASSES IS %d\n", (int)(fabs(imass-pep[i].pepmass)+0.5));
-		exit(-1);
+		Rprintf("ERROR: SOMETHING IS WRONG HERE, THE DIFERENCE BETWEEN THE GIVEN (%f) AND CALCULATED (%f) MASSES IS %f\n",(float)pep[i].pepmass, (float)imass, (float)(fabs(imass-pep[i].pepmass)+0.5));
+		//exit(-1);
+		stop("IMASS calculation doesn't match value in peptideList");
 	  }
     }
   }
@@ -300,13 +306,13 @@ float bico(int n, int k)
   else if (k < 0) bin = 0.0;
   else if (k == 0) bin = 1.0;
   else
-  {  
+  {
     lnfactn = gammln((float)(n+1));
     lnfactk = gammln((float)(k+1));
     lnfactnk = gammln((float)(n-k+1));
     bin = floor(0.5+exp(lnfactn - lnfactk - lnfactnk));
   }
-  
+
   return (bin);
 }
 
@@ -319,18 +325,19 @@ double getIsoDist(int ii, ISOTAB *element, int num, double *peptide, ISODIST *di
   double mult, power, probj, probk, probl, probm;
   double probjk, probkl, probjkl, probklm, probjklm;
   int i, j, k, l, m;
-  
+
   /* get monoisotopic mass and it's probabilty */
   dist[ii].mass[0] = 0.0;
   dist[ii].prob[0] = 100.0;
 
-  for (i = 0; i < num; i++)
-  {
+  Rprintf("getIsoDist Loop 1:\n");
+  for (i = 0; i < num; i++){
     power = peptide[i];
     dist[ii].mass[0] = dist[ii].mass[0] + peptide[i]*element[i].isotope[0];
     dist[ii].prob[0] = dist[ii].prob[0] * pow(element[i].abundance[0], power);
+    Rprintf("peptide[%d] = %0.2f, mass = %0.2f, prob = %0.2f\n",i,peptide[i], dist[ii].mass[0],dist[ii].prob[0]);
   }
-  
+
   /* get probabilty of monoisotopic mass plus 1 */
   dist[ii].prob[1] = 0.0;
   for (j = 0; j < num; j++)
@@ -348,7 +355,7 @@ double getIsoDist(int ii, ISOTAB *element, int num, double *peptide, ISODIST *di
     }
     dist[ii].prob[1] =   dist[ii].prob[1] + probj;
   }
-  dist[ii].prob[1] =  dist[ii].prob[1]*100.0; 
+  dist[ii].prob[1] =  dist[ii].prob[1]*100.0;
 
   /* get probabilty of monoisotopic mass plus 2 */
   dist[ii].prob[2] = 0.0;
@@ -366,7 +373,7 @@ double getIsoDist(int ii, ISOTAB *element, int num, double *peptide, ISODIST *di
       }
     }
     dist[ii].prob[2] = dist[ii].prob[2] + probj;
-  }  
+  }
   for (j = 0; j < num; j++)
   {
     power = peptide[j] - 2.0;
@@ -408,8 +415,8 @@ double getIsoDist(int ii, ISOTAB *element, int num, double *peptide, ISODIST *di
       dist[ii].prob[2] = dist[ii].prob[2] + probjk;
     }
   }
-  dist[ii].prob[2] =  dist[ii].prob[2]*100.0; 
- 
+  dist[ii].prob[2] =  dist[ii].prob[2]*100.0;
+
   /* get probabilty of monoisotopic mass plus 3 */
   dist[ii].prob[3] = 0.0;
   for (j = 0; j < num; j++)
@@ -426,7 +433,7 @@ double getIsoDist(int ii, ISOTAB *element, int num, double *peptide, ISODIST *di
       }
     }
     dist[ii].prob[3] = dist[ii].prob[3] + probj;
-  } 
+  }
   for (j = 0; j < num; j++)
   {
     power = peptide[j] - 2.0;
@@ -546,8 +553,8 @@ double getIsoDist(int ii, ISOTAB *element, int num, double *peptide, ISODIST *di
       }
     }
   }
-  dist[ii].prob[3] =  dist[ii].prob[3]*100.0; 
- 
+  dist[ii].prob[3] =  dist[ii].prob[3]*100.0;
+
   /* get probabilty of monoisotopic mass plus 4 */
   dist[ii].prob[4] = 0.0;
   /* note there is no abundance for iso 4 or more */
@@ -889,19 +896,19 @@ double getIsoDist(int ii, ISOTAB *element, int num, double *peptide, ISODIST *di
       }
     }
   }
-  dist[ii].prob[4] =  dist[ii].prob[4]*100.0; 
- 
+  dist[ii].prob[4] =  dist[ii].prob[4]*100.0;
+
  double max = 0.0;
   for (i = 0; i < 5; i++)
   {
-    if (dist[ii].prob[i] > max) max =   dist[ii].prob[i]; 
+    if (dist[ii].prob[i] > max) max =   dist[ii].prob[i];
   }
   for (i = 0; i < 5; i++)
   {
-    dist[ii].prob[i] = dist[ii].prob[i]/max; 
+    dist[ii].prob[i] = dist[ii].prob[i]/max;
   }
 
-  return(dist[ii].mass[0]);  
+  return(dist[ii].mass[0]);
 }
 
 

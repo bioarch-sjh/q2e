@@ -7,6 +7,9 @@ using namespace Rcpp;
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+
+#include <chrono>
+
 #include "constants.h"
 
 #include "makepeptidefiles.h"
@@ -41,6 +44,32 @@ int getLine(FILE *fp, int v[], int *zs, int *pg, int *cbm);
 //void runga (char *name, PEPTIDE *pep, int numpep, ISODIST  *dist, int msamples, int FITPEAKS, double GALIM);
 
 
+
+
+/* Debugging the pep structure via printfs..
+
+ pep[k].pepmass = ftmp + 1.0;
+ pep[k].length = getLine(fin, pep[k].numseq, &zs, &pg, &cbm);
+ pep[k].zs = zs;
+ pep[k].pg = pg;
+ pep[k].cbm = cbm;*/
+void printpep(PEPTIDE *pep, int numpep){
+
+  Rprintf("%d peptides in pep array\n",numpep);
+  Rprintf("#\tnq\tmass\t\tlen\tzs\tpg\tcbm\n");
+  for(int pp=0;pp<numpep;pp++){
+    Rprintf("%d\t%d\t%4.3f\t%d\t%d\t%d\t%d\n",
+            pp,
+            pep[pp].nq,
+            pep[pp].pepmass,
+            pep[pp].length,
+            pep[pp].zs,
+            pep[pp].pg,
+            pep[pp].cbm);
+  }
+}
+
+
 /****************************************
  Procedure:      rq2e, access point for the
  *****************************************/
@@ -56,7 +85,7 @@ int rq2e ( Rcpp::StringVector argVector, Rcpp::StringVector fnVector, int Rnrepl
   int i, j, k, ii, nsamples, nreps, zs, cbm, pg;
   int numpep, newnumpep;
   float ftmp, ftmp1;
-  int tmp, dtmp, dtmp1;
+  int tmp, dtmp;//, dtmp1;
   char name[MAX_STRING];
 
   int FITPEAKS;
@@ -78,7 +107,7 @@ int rq2e ( Rcpp::StringVector argVector, Rcpp::StringVector fnVector, int Rnrepl
   std::string peptideFile = Rcpp::as<std::string>(argVector[2]);
   std::string paramFile = Rcpp::as<std::string>(argVector[3]);
 
-  printf("reading parameters from %s\n", paramFile.c_str());
+  Rprintf("reading parameters from %s\n", paramFile.c_str());
   fp_param = fopen(paramFile.c_str(), "r");
   if (fp_param == NULL)
   {
@@ -242,7 +271,7 @@ int rq2e ( Rcpp::StringVector argVector, Rcpp::StringVector fnVector, int Rnrepl
         pep[k].sample = (SAMPLEPEP*) malloc (msamples * sizeof(SAMPLEPEP));
         pep[k].numseq = (int*) malloc (MAXLINE * sizeof(int));
       }
-      printf("checking %d m/zs:\n", numpep);
+      Rprintf("checking %d m/zs:\n", numpep);
 
       for (k = 0; k < numpep; k++)
       {
@@ -255,7 +284,7 @@ int rq2e ( Rcpp::StringVector argVector, Rcpp::StringVector fnVector, int Rnrepl
         pep[k].zs = zs;
         pep[k].pg = pg;
         pep[k].cbm = cbm;
-        //printf("%f %d\n", pep[k].pepmass, pep[k].nq);
+        Rprintf("\t%f nq:%d  zs:%d\n", pep[k].pepmass, pep[k].nq, pep[k].zs);
         for (j = 0; j < msamples; j++)
         {
           pep[k].sample[j].peaks = (double*) malloc ((FITPEAKS + 2) * sizeof(double));
@@ -265,7 +294,16 @@ int rq2e ( Rcpp::StringVector argVector, Rcpp::StringVector fnVector, int Rnrepl
         }
 
       }
+      Rprintf("Finished checking peptideList\n");
+      Rprintf("Finished checking\n");
+      Rprintf("Finished checking\n");
+      Rprintf("Finished checking\n\n");
+      printpep(pep,numpep);
+
       newnumpep = pepfiles(outfilename, data, nsamples, nreps, nmasses, pep, numpep, FITPEAKS, FIRSTMASS, SNRLIM);
+
+      Rprintf("Finished pepfiles function\n");
+
       if (newnumpep > 0)
       {
         // note: this will not be filled for those peptides with pep[i].found = 0
@@ -277,9 +315,11 @@ int rq2e ( Rcpp::StringVector argVector, Rcpp::StringVector fnVector, int Rnrepl
           dist[k].prob = (double*) malloc (5 * sizeof(double));
         }
 
+        Rprintf("Running iso()\n");
         iso(pep, numpep, dist);
 
         // number of peaks in isotope distribution to be fitted
+        Rprintf("Running runga()\n");
         runga (outfilename, pep, numpep, dist, msamples, FITPEAKS, GALIM);
 
         for (k = 0; k < newnumpep; k++)
@@ -290,7 +330,7 @@ int rq2e ( Rcpp::StringVector argVector, Rcpp::StringVector fnVector, int Rnrepl
         free (dist);
 
       }
-      else printf("none of these peptide found!\n");
+      else Rprintf("none of these peptide found!\n");
 
       for (i = 0; i < nsamples; i++)
       {
@@ -571,7 +611,9 @@ int getLine(FILE *fp, int v[], int *zs, int *pg, int *cbm)
 
   v[i] = ch-65;
 
-  while (ch != 10)
+  //JW had it like this but this can be flaky for different systems that might use CR LF etc.
+  //while (ch != 10)
+  while (ch >= 32)
   {
     i++;
     ch = fgetc(fp);

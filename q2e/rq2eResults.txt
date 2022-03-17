@@ -1,22 +1,22 @@
 836.4
-sample 1: rejected due to poor SNR: signal 165.38; noise 76.14
-1105.6
-sample 1: best fit is : 0.003734 with signal to noise level:  7.53    noise diff:  0.06  beta1 = 0.977  
+sample 1: best fit is : 0.002212 with signal to noise level:  5.47    noise diff:  0.55  beta1 = 0.141  
+1162.6
+sample 1: best fit is : 0.005054 with signal to noise level:  14.50    noise diff:  0.46  beta1 = 0.000  beta2 = 0.260  
 1690.8
-sample 1: rejected due to poor SNR: signal 34.97; noise 16.26
+sample 1: rejected due to poor SNR: signal 754.24; noise 609.16
 1706.8
-sample 1: best fit is : 0.010092 with signal to noise level:  3.34    noise diff:  0.13  beta1 = 0.874  
+sample 1: rejected due to poor SNR: signal 572.87; noise 444.30
 1863.9
-sample 1: rejected due to poor SNR: signal 17.95; noise 15.60
+sample 1: rejected due to poor SNR: signal 434.89; noise 309.76
 2056.9
-sample 1: rejected due to poor fit in GA
+sample 1: best fit is : 0.003042 with signal to noise level:  4.43    noise diff:  0.27  beta1 = 1.000  
 2073.0
-sample 1: best fit is : 0.001985 with signal to noise level:  4.22    noise diff:  0.05  beta1 = 0.512  
+sample 1: rejected due to poor SNR: signal 502.27; noise 330.45
 2088.9
-sample 1: rejected due to poor fit in GA
+sample 1: rejected due to poor SNR: signal 419.88; noise 435.74
 2105.0
-sample 1: rejected due to poor SNR: signal 15.47; noise 11.40
+sample 1: rejected due to poor SNR: signal 882.85; noise 453.70
 2689.2
-sample 1: best fit is : 0.007578 with signal to noise level:  9.87    noise diff:  0.41  beta1 = 1.000  
+sample 1: rejected due to poor SNR: signal 340.05; noise 423.21
 2705.2
-sample 1: best fit is : 0.003001 with signal to noise level:  16.97    noise diff:  0.68  beta1 = 0.905  
+sample 1: rejected due to poor fit in GA

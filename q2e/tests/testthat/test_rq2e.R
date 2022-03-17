@@ -47,7 +47,7 @@ test_that("A single datafile is parsed",{
 
 
 
-test_that("Julie Wilson's example datafiles are parsed",{
+test_that("Julie Wilson's example datafiles are parsed with 3 replicates",{
 
 
   datafiles <- c(system.file("extdata", "1052a1_65_1_plastic_M19_04132012Kinetics1rr.txt", package = "q2e"),
@@ -65,8 +65,6 @@ test_that("Julie Wilson's example datafiles are parsed",{
 
 
 test_that("Julie Wilson's example datafiles are parsed",{
-
-
   datafiles <- c(system.file("extdata", "1052a1_65_1_plastic_M19_04132012Kinetics1rr.txt", package = "q2e"),
                  system.file("extdata", "1052a2_65_1_plastic_A1_04132012Kinetics1rr.txt", package = "q2e"),
                  system.file("extdata", "1052a3_65_1_plastic_A16_04132012Kinetics1rr.txt", package = "q2e"),
